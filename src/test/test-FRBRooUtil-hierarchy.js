@@ -25,6 +25,8 @@ var loadPage = (htmlSource) => {
     global.window = dom.window;
 }
 
+let baseAnnotationOntologyURL = "http://localhost:3001/editionannotationontology.ttl";
+
 var loadRDFaPage = () => {
     let vocabulary = "http://localhost:3001/vangoghannotationontology.ttl#";
     let htmlSource = `
@@ -211,7 +213,7 @@ describe("FRBRooUtil", () => {
         loadRDFaPage();
         FRBRooUtil.loadVocabularies((error, store) => {
             vocabularyStore = store;
-            FRBRooUtil.loadExternalResources(vocabularyStore, (error, store) => {
+            FRBRooUtil.loadExternalResources(vocabularyStore, (error, doIndexing, store) => {
                 resourceStore = store;
                 done();
             });
@@ -386,6 +388,7 @@ describe("FRBRooUtil", () => {
         let externalResources = null;
 
         before((done) => {
+            RDFaUtil.setBaseAnnotationOntology(baseAnnotationOntologyURL);
             RDFaUtil.indexRDFa((error, index) => {
                 rdfaResources = Object.keys(index.resources);
                 representations = FRBRooUtil.mapRepresentedResources(resourceStore, rdfaResources);

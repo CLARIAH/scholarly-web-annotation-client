@@ -212,7 +212,7 @@ const AnnotationActions = {
         AnnotationAPI.getAnnotationsByTargets(resourceIds, AnnotationActions.accessStatus, (error, annotations) => {
             if (error) {
                 //console.error(resourceIds, error.toString());
-                window.alert("Error loading annotations: " + error.toString());
+                //window.alert("Error loading annotations: " + error.toString());
             }
 
             AnnotationStore.annotationIndex = {};
@@ -276,7 +276,7 @@ const AnnotationActions = {
     },
 
     indexExternalResources: (resources, callback) => {
-        var t0 = performance.now();
+        //var t0 = performance.now();
         //console.log("AnnotationActions indexExternalResources - loading vocabularies");
         //console.log(Date());
         FRBRooUtil.loadVocabularies((error, store) => {
@@ -290,7 +290,7 @@ const AnnotationActions = {
                 //console.log("indexExternalResources - returning with undefined vocabularyStore");
                 return callback(null, false, null);
             }
-            var t1 = performance.now();
+            //var t1 = performance.now();
             AnnotationStore.vocabularyStore = store;
             AnnotationStore.resourceStore = null;
             AnnotationStore.representedResourceMap = {};
@@ -305,7 +305,7 @@ const AnnotationActions = {
                 } else if (!doIndexing) {
                     return callback(null);
                 } else {
-                    var t2 = performance.now();
+                    //var t2 = performance.now();
                     AnnotationStore.resourceStore = store;
                     //console.log("AnnotationActions - resourceStore:", store);
                     //console.log("AnnotationActions - resources:", resources);
@@ -313,13 +313,13 @@ const AnnotationActions = {
                     let representedResourceMap = FRBRooUtil.mapRepresentedResources(store, resources);
                     //console.log("AnnotationActions - representedResourceMap:", representedResourceMap);
                     //console.log(Date());
-                    var t3 = performance.now();
+                    //var t3 = performance.now();
                     AnnotationStore.representedResourceMap = representedResourceMap;
                     let externalResourceIndex = FRBRooUtil.indexExternalResources(store, resources);
                     //console.log("AnnotationActions - externalResourceIndex:", externalResourceIndex);
                     //console.log(Date());
                     AnnotationStore.externalResourceIndex = externalResourceIndex;
-                    var t4 = performance.now();
+                    //var t4 = performance.now();
                     //console.log("Call to loadVocabularies took " + (t1 - t0) + " milliseconds.");
                     //console.log("Call to loadExternalResources took " + (t2 - t1) + " milliseconds.");
                     //console.log("Call to mapRepresentedResources took " + (t3 - t2) + " milliseconds.");
@@ -392,7 +392,7 @@ const AnnotationActions = {
         AnnotationActions.indexResources((error) => {
             if (error) {
                 //console.error(error);
-                window.alert("Error indexing RDFa resources in this page\n" + error.toString());
+                //window.alert("Error indexing RDFa resources in this page\n" + error.toString());
                 return error;
             }
             //console.log("loadResources - indexResources done");
@@ -465,7 +465,7 @@ const AnnotationActions = {
     logoutUser : function() {
         AnnotationAPI.logoutUser((error) => {
             if (error) {
-                window.alert("Error logging out!");
+                //window.alert("Error logging out!");
                 return null;
             }
             AppDispatcher.dispatch({

@@ -1,7 +1,12 @@
 // api-test.js
 "use strict";
 
-var expect = require("chai").expect;
+const chai = require("chai");
+const chaiFetch = require("chai-fetch");
+const mockServer = require("mockttp").getLocal();
+const ServerMock = require("mock-http-server");
+chai.use(chaiFetch);
+const expect = require("chai").expect;
 require("es6-promise").polyfill();
 require("isomorphic-fetch");
 import AnnotationAPI from "../api/AnnotationAPI.js";
@@ -45,6 +50,21 @@ let annotationValid = {
     ]
 };
 
+let getAnnotationsReply = {
+    "@context": [
+        "http://www.w3.org/ns/ldp.jsonld",
+        "http://www.w3.org/ns/anno.jsonld"
+    ],
+    "id": "http://localhost:3000/api/annotations?iris=1",
+    "total": 0,
+    "type": [
+        "BasicContainer",
+        "AnnotationContainer"
+    ],
+    "first": "http://localhost:3000/api/annotations?iris=1&page=0",
+    "last": "http://localhost:3000/api/annotations?iris=1&page=0"
+}
+
 describe("AnnotationAPI", () => {
 });
 
@@ -57,6 +77,18 @@ describe("AnnotationAPI", () => {
     });
 
     describe("after initialising", () => {
+
+        before((done) => {
+            mockServer.start((3000));
+            mockServer.get("/api").thenReply(200, true);
+            return done();
+        });
+
+        after((done) => {
+            mockServer.stop();
+            done();
+        });
+
         it("should exist", (done) => {
             expect(AnnotationAPI).to.not.be.undefined;
             done();
@@ -81,6 +113,21 @@ describe("AnnotationAPI", () => {
     });
 
     describe("registering a new user", () => {
+
+        before((done) => {
+            mockServer.start((3000));
+            mockServer.post("/api/users", user).thenReply(201, JSON.stringify({user: {username: user.username, token: 'bla'}, action: "created"}));
+            mockServer.get("/api/logout").thenReply(200, JSON.stringify({action: "logged out"}));
+            mockServer.post("/api/login", user).thenReply(200, JSON.stringify({user: {username: user.username, token: 'bla'}, action: "authenticated"}));
+            mockServer.delete("/api/users", user).thenReply(204, JSON.stringify({}));
+            return done();
+        });
+
+        after((done) => {
+            mockServer.stop();
+            done();
+        });
+
         it("should return 201 on registering", (done) => {
             AnnotationAPI.registerUser(user, (error, response) => {
                 expect(error).to.equal(null);
@@ -100,7 +147,7 @@ describe("AnnotationAPI", () => {
         it("should return 200 on login", (done) => {
             AnnotationAPI.loginUser(user, (error, response) => {
                 expect(error).to.equal(null);
-                expect(response.action).to.equal("verified");
+                expect(response.action).to.equal("authenticated");
                 done();
             });
         });
@@ -118,13 +165,24 @@ describe("AnnotationAPI", () => {
 
 describe("AnnotationAPI", () => {
 
+    var server = new ServerMock({ host: "localhost", port: 3000 });
+
     before((done) => {
         let serverAddress = "http://localhost:3000/api";
         AnnotationAPI.setServerAddress(serverAddress);
+        mockServer.start((3000));
+        mockServer.post("/api/annotations", annotationValid).thenReply(403, JSON.stringify({message: "Unauthorized access"}));
+        mockServer.get("/api/annotations").thenReply(200, JSON.stringify(getAnnotationsReply));
         done();
     });
 
+    after((done) => {
+        mockServer.stop();
+        done();
+    })
+
     describe("POSTing an annotation unauthorized", () => {
+
         it("should return 403", (done) => {
             let permission = "private";
             AnnotationAPI.saveAnnotation(annotationValid, permission, function(error, annotation) {
@@ -149,25 +207,68 @@ describe("AnnotationAPI", () => {
 
 describe("AnnotationAPI", () => {
 
+    let fakeId = "this-resource-does-not-exist";
+    let host = "localhost";
+    let port = 3333;
+    let serverAddress = "http://" + host + ":" + port + "/api";
+    let userDetails = {user: {username: user.username, token: 'bla'}, action: "authenticated"};
+    let annotationWithId = JSON.parse(JSON.stringify(annotationValid))
+    annotationWithId.id = "some_id";
+    var server =  new ServerMock({ host: host, port: port });
+
     before((done) => {
-        let serverAddress = "http://localhost:3000/api";
+        //mockServer.start((3000));
         AnnotationAPI.setServerAddress(serverAddress);
-        AnnotationAPI.registerUser(user, (error, response) => {
-            done();
-        });
+        AnnotationAPI.setUserDetails(userDetails);
+        server.start(done);
+        /*
+        server.on({
+            method: "POST",
+            path: "/api/login",
+            reply: {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(userDetails)
+            }
+        })
+        //mockServer.post("/api/login", user).thenReply(200, JSON.stringify({user: {username: user.username, token: 'bla'}, action: "authenticated"}));
+        //mockServer.post("/api/annotations", annotationValid).thenReply(201, JSON.stringify(annotationWithId));
+        mockServer.post("/api/annotations", annotationInvalid).thenReply(400, JSON.stringify({message: "annotation MUST have at least one target"}));
+        mockServer.get("/api/annotations").thenReply(200, JSON.stringify(getAnnotationsReply));
+        */
+        //AnnotationAPI.registerUser(user, (error, response) => {
+        //    done();
+        //});
     });
 
     after((done) => {
+        server.stop(done);
+        /*
         AnnotationAPI.deleteUser(user, (error, response) => {
-            done();
+            server.stop(done);
+            //mockServer.stop();
+            //done();
         });
+        */
     });
 
     describe("sending a non-existing resource ID", () => {
+
         it("should return an empty list", (done) => {
-            let fakeId = "this-resource-does-not-exist";
-            let expectedData = [];
             let accessStatus = ["private"];
+            let urlQuery = {"target_id": fakeId,"access_status": accessStatus.join(","),"include_permissions":"true"};
+
+            //mockServer.get("/api/annotations").withQuery(urlQuery).thenReply(200, JSON.stringify(getAnnotationsReply));
+            server.on({
+                method: "GET",
+                path: "/api/annotations",
+                reply: {
+                    status: 200,
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(getAnnotationsReply)
+                }
+            });
+            let expectedData = [];
             AnnotationAPI.getAnnotationsByTarget(fakeId, accessStatus, function(error, actualData) {
                 expect(error).to.equal(null);
                 expect(actualData.total).to.eql(0);
@@ -195,7 +296,32 @@ describe("AnnotationAPI", () => {
 
         it("should return an error", (done) => {
             let permission = "private";
+            var status = null;
+            server.on({
+                method: "POST",
+                path: "/api/annotations",
+                reply: {
+                    status: function(req) {
+                        if (req.body.target) {
+                            return 201;
+                        } else {
+                            return 400;
+                        }
+                    },
+                    headers: {"Content-Type": "application/json" },
+                    body: function(req) {
+                        var body = null;
+                        if (req.body.target) {
+                            body = annotationWithId;
+                        } else {
+                            body = {message: "annotation MUST have at least one target"};
+                        }
+                        return JSON.stringify(body);
+                    }
+                }
+            });
             AnnotationAPI.saveAnnotation(annotationInvalid, permission, function(error, data) {
+                expect(error).to.not.equal(null);
                 expect(error.status).to.equal(400);
                 expect(error.message).to.equal("annotation MUST have at least one target");
                 done();
@@ -207,6 +333,17 @@ describe("AnnotationAPI", () => {
     describe("handling a valid annotation", () => {
 
         var savedAnnotation;
+        mockServer.post("/api/annotations", annotationValid).thenReply(201, JSON.stringify({message: "Unauthorized access"}));
+
+        server.on({
+            method: "GET",
+            path: "/api/annotations/" + annotationWithId.id,
+            reply: {
+                status: 200,
+                header: {"Content-Type": "application/json"},
+                body: JSON.stringify(annotationWithId)
+            }
+        });
 
         it("should return annotation with ID after POST", (done) => {
             let permission = "private";
@@ -227,6 +364,7 @@ describe("AnnotationAPI", () => {
             });
         });
 
+        /*
         it("should return updated annotation after PUT", (done) => {
             let newTarget = "urn:vangogh:testletter.receiver";
             savedAnnotation.target[0].source = newTarget;
@@ -254,9 +392,8 @@ describe("AnnotationAPI", () => {
                 done();
             });
         });
-        /*
+        */
 
-    */
     });
 });
 

@@ -1,7 +1,7 @@
 /*
  *
  * Creators:
- *   - Marijn Koolen (Huygens ING, Royal Netherlands Academy of Arts and Sciences)
+ *   - Marijn Koolen (Humanities Cluster, Royal Netherlands Academy of Arts and Sciences)
  *   - Jaap Blom (Netherlands Institute for Sound and Vision)
  *
  */
@@ -56,7 +56,8 @@ export class ScholarlyWebAnnotator {
         if (localStorage.userDetails) {
             AnnotationActions.loginUser(JSON.parse(localStorage.userDetails));
         } else {
-            console.log("configureClient - loadResources");
+            //console.log("configureClient - loadResources");
+            //console.log(Date());
             AnnotationActions.loadResources();
         }
     }
@@ -64,11 +65,13 @@ export class ScholarlyWebAnnotator {
     configureObservers() {
         DOMUtil.setObserverNodeClass(this.clientConfig.targetObserver.targetObserverClass);
         this.observerNodes = DOMUtil.getObserverNodes();
+        //console.log("configureObservers - observerNodes:", this.observerNodes);
         RDFaUtil.setObserverNodes(this.observerNodes);
         this.setSelectionListener();
         //console.log("configureObservers - setAnnotationAttributes");
         this.setAnnotationAttributes();
         if (this.clientConfig.targetObserver.observeMutations) {
+            //console.log("observing mutations");
             this.startObserver();
         }
     }
@@ -105,7 +108,7 @@ export class ScholarlyWebAnnotator {
             this.setAnnotationAttributes(this.observerNodes);
             // check if there are new resources
             if (this.resourcesChanged())
-                //console.log("startObserver - loadResources");
+                //console.log("startObserver resourcesChanged - loadResources");
                 AnnotationActions.loadResources(); // trigger reload of annotations
         });
 

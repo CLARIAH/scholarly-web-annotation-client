@@ -25,6 +25,8 @@ var loadPage = (htmlSource) => {
     global.window = dom.window;
 }
 
+let baseAnnotationOntologyURL = "http://localhost:3001/editionannotationontology.ttl";
+
 var loadRDFaPage = () => {
     loadPage(htmlSource);
     let observerNodes = document.getElementsByClassName("annotation-target-observer");
@@ -54,7 +56,7 @@ let htmlSource = `
         <link rel="stylesheet" type="text/css" href="frbroo.css">
         <link rel="alternate" type="text/n3" href="frbroo_alternate.ttl">
     </head>
-    <body class=\"annotation-target-observer\" vocab=\"http://localhost:3001/vangoghannotationontology.ttl#\">
+    <body class="annotation-target-observer" vocab="http://localhost:3001/vangoghannotationontology.ttl#">
         <div typeof="EditionText" resource="urn:vangogh/letter=001:repr=original">Hello</div>
         <div typeof="EditionTranscript" resource="urn:vangogh/letter=001:repr=transcript">Goodbye</div>
     </body>
@@ -192,6 +194,7 @@ describe("AnnotationActions", () => {
     describe("indexResources", (done) => {
 
         beforeEach((done) => {
+            RDFaUtil.setBaseAnnotationOntology(baseAnnotationOntologyURL);
             loadRDFaPage();
             done();
         });
@@ -266,6 +269,8 @@ describe("AnnotationActions", () => {
         beforeEach((done) => {
             mockServer.start((3001));
             mockServer.get("/frbroo_alternate.ttl").thenReply(200, frbrooRelationsString);
+            mockServer.get("/vangoghannotationontology.ttl").thenReply(200, vangoghOntologyString);
+            mockServer.get("/editionannotationontology.ttl").thenReply(200, editionOntologyString);
             FRBRooUtil.store = null;
             done();
         });

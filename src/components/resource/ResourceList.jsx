@@ -23,6 +23,8 @@ class ResourceList extends React.Component {
     }
 
     listResources(topResources, resourceMaps) {
+        //console.log("topResources:", topResources);
+        //console.log("resourceMaps:", resourceMaps);
         let resourceIds = Object.keys(AnnotationStore.resourceIndex);
         let externalIds = Object.keys(AnnotationStore.externalResourceIndex).filter((resourceId) => {
             return !AnnotationStore.resourceIndex.hasOwnProperty(resourceId);

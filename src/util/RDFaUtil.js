@@ -23,11 +23,20 @@ const RDFaUtil = {
         RDFaUtil.baseAnnotationOntologyURL = url;
     },
 
+    checkBaseAnnotationOntologySet() {
+        if (RDFaUtil.baseAnnotationOntologyURL) {
+            return true;
+        } else {
+            throw Error("RDFAUtil - baseAnnotationOntologyURL not set");
+        }
+    },
+
     setObserverNodes(observerNodes) {
         this.observerNodes = Array.from(observerNodes);
     },
 
     resetIgnoreNodes() {
+        RDFaUtil.checkBaseAnnotationOntologySet();
         var prefixIndex = {};
         var vocab = null;
         RDFaUtil.setIgnoreNodes(document, vocab, prefixIndex);
@@ -35,6 +44,7 @@ const RDFaUtil = {
     },
 
     setIgnoreNodes(node, vocab, prefixIndex) {
+        RDFaUtil.checkBaseAnnotationOntologySet();
         RDFaUtil.indexPrefixes(node, prefixIndex);
         let attrs = RDFaUtil.getRDFaAttributes(node);
         if (attrs.hasOwnProperty("vocab")) {
@@ -49,22 +59,25 @@ const RDFaUtil = {
     },
 
     setIgnoreNode(node, vocab, prefixIndex) {
+        RDFaUtil.checkBaseAnnotationOntologySet();
         let attrs = RDFaUtil.getRDFaAttributes(node);
         if (attrs.hasOwnProperty("typeof")) {
-            //console.log("setIgnoreNode - typeof:", attrs.typeof);
+            console.log("setIgnoreNode - typeof:", attrs.typeof);
             let rdfType = RDFaUtil.expandRDFaTerm(attrs.typeof, vocab, prefixIndex);
-            //console.log("setIgnoreNode - rdfType:", rdfType);
+            console.log("setIgnoreNode - rdfType:", rdfType);
             node.rdfaIgnorable = (RDFaUtil.isIgnoreClass(rdfType)) ? true : false;
-            //console.log("ignore URL:", RDFaUtil.baseAnnotationOntologyURL + "#IgnorableElement");
-            //console.log("ignorable:", node.rdfaIgnorable);
+            console.log("ignore URL:", RDFaUtil.baseAnnotationOntologyURL + "#IgnorableElement");
+            console.log("ignorable:", node.rdfaIgnorable);
         }
     },
 
     isIgnoreClass(url) {
+        RDFaUtil.checkBaseAnnotationOntologySet();
         return url === RDFaUtil.baseAnnotationOntologyURL + "#IgnorableElement";
     },
 
     isIgnoreNode(node) {
+        RDFaUtil.checkBaseAnnotationOntologySet();
         return node.rdfaIgnorable;
     },
 

@@ -25,7 +25,8 @@ const AnnotationAPI = {
 
     checkServerAvailable : (callback) => {
         fetch(AnnotationAPI.annotationServer, {}).then((response) => {
-            return response.json();
+            return response.status;
+            //return response.json();
         //}).then((data) => {
         }).then(() => {
             return callback(true);
@@ -70,6 +71,7 @@ const AnnotationAPI = {
             if (status === 204) {
                 return {};
             }
+            //console.log("Headers:", response.headers);
             return response.json();
         }).then((data) => {
             if (status === 403 && AnnotationAPI.userDetails && AnnotationAPI.userDetails.token) {
@@ -159,6 +161,8 @@ const AnnotationAPI = {
             method: "GET"
         };
         AnnotationAPI.makeRequest(url, options, (error, data) => {
+            //console.log("AnnotationAPI - getAnnotationsByTarget makeRequest callback");
+            //console.log(Date());
             return callback(error, data);
         });
     },
@@ -308,7 +312,7 @@ const AnnotationAPI = {
         };
         AnnotationAPI.makeRequest(url, options, (error, authorizationData) => {
             if (!error) {
-                userDetails.user_id = authorizationData.user.user_id;
+                userDetails.user_id = authorizationData.user.username;
                 userDetails.token = authorizationData.user.token;
                 AnnotationAPI.setUserDetails(userDetails);
             }
@@ -327,10 +331,13 @@ const AnnotationAPI = {
             body: JSON.stringify(userDetails)
         };
         AnnotationAPI.makeRequest(url, options, (error, authorizationData) => {
+            console.log("AnnotationAPI loginUser - error", error);
+            console.log("AnnotationAPI loginUser - authorizationData", authorizationData);
             if (!error) {
-                userDetails.user_id = authorizationData.user.user_id;
+                userDetails.user_id = authorizationData.user.username;
                 userDetails.token = authorizationData.user.token;
                 AnnotationAPI.setUserDetails(userDetails);
+                //console.log(userDetails);
             }
             return callback(error, authorizationData);
         });
