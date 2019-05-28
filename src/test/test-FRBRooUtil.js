@@ -772,8 +772,9 @@ describe("FRBRooUtil", () => {
 
         it("should do nothing if no external resources are specified", (done) => {
             loadPlainPage();
-            FRBRooUtil.loadExternalResources(vocabularyStore, (error, store) => {
+            FRBRooUtil.loadExternalResources(vocabularyStore, (error, doIndexing, store) => {
                 expect(error).to.equal(null);
+                expect(doIndexing).to.equal(false);
                 expect(store).to.equal(null);
                 done();
             });
@@ -781,7 +782,8 @@ describe("FRBRooUtil", () => {
 
         it("should store relations if external resources are specified", (done) => {
             loadRDFaPage();
-            FRBRooUtil.loadExternalResources(vocabularyStore, (error, store) => {
+            FRBRooUtil.loadExternalResources(vocabularyStore, (error, doIndexing, store) => {
+                expect(doIndexing).to.equal(true);
                 expect(store).to.not.equal(null);
                 expect(store.relations).to.exist;
                 done();
@@ -790,8 +792,9 @@ describe("FRBRooUtil", () => {
 
         it("should store triples if external resources are specified", (done) => {
             loadRDFaPage();
-            FRBRooUtil.loadExternalResources(vocabularyStore, (error, store) => {
+            FRBRooUtil.loadExternalResources(vocabularyStore, (error, doIndexing, store) => {
                 expect(error).to.equal(null);
+                expect(doIndexing).to.equal(true);
                 expect(store).to.not.equal(null);
                 expect(store.triples).to.exist;
                 done();

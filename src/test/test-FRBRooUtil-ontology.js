@@ -508,7 +508,7 @@ describe("FRBRooUtil", () => {
         it("should return an empty store if no vocabularies are specified in document", (done) => {
             loadPlainPage();
             FRBRooUtil.loadVocabularies((error, vocabularyStore) => {
-                expect(vocabularyStore).to.not.equal(undefined);
+                expect(vocabularyStore).to.not.equal(null);
                 expect(vocabularyStore.hasOwnProperty("vocabularies")).to.equal(true);
                 expect(vocabularyStore.vocabularies.length).to.equal(0);
                 done();

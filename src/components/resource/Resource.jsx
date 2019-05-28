@@ -17,6 +17,7 @@ export default class Resource extends React.Component {
         if (this.props.data.domNode) {
             this.props.data.domNode.style.border = "1px solid red";
         }
+        //console.log(this.props.data);
     }
 
     onMouseOutHandler() {
@@ -27,7 +28,8 @@ export default class Resource extends React.Component {
 
     render() {
         let component = this;
-        //console.log(this.props.data.type);
+        //console.log("Resource - render props.data:", this.props.data);
+        //console.log(Date());
         let labels = this.props
         let typeLabels = this.props.data.rdfTypeLabel.map((label) => {
             if (!this.props.data.rdfTypeLabel) {

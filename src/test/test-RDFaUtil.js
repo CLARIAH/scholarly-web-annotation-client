@@ -155,6 +155,9 @@ var loadIgnorable = () => {
 
 describe("RDFaUtil parsing HTML with ignorable elements", () => {
 
+    let vocabulary = "http://boot.huygens.knaw.nl/vgdemo/editionannotationontology.ttl";
+    RDFaUtil.setBaseAnnotationOntology(vocabulary);
+
     beforeEach((done) => {
         loadIgnorable();
         done();

@@ -59,6 +59,7 @@ const FRBRooUtil = {
                 return callback(null, doIndexing, null);
             } else {
                 resourceStore.triples = triples;
+                //console.log("doIndexing:", doIndexing);
                 return callback(null, doIndexing, resourceStore);
             }
         });
@@ -511,24 +512,24 @@ const FRBRooUtil = {
         if (!FRBRooUtil.isValidVocabularyStore(vocabularyStore)) {
             throw Error("Invalid vocabularyStore given");
         }
-        var t0 = performance.now();
+        //var t0 = performance.now();
         let imports = FRBRooUtil.getImports(vocabularyStore);
-        var t1 = performance.now();
+        //var t1 = performance.now();
         //console.log("imports:", imports);
         if (imports.length > 0) {
             FRBRooUtil.readVocabularies(imports, (error, vocabularies) => {
                 if (error) {
                     return callback(error, false);
                 }
-                var t2 = performance.now();
+                //var t2 = performance.now();
                 FRBRooUtil.updateVocabularyStore(vocabularyStore, vocabularies);
-                var t3 = performance.now();
+                //var t3 = performance.now();
                 FRBRooUtil.importAndUpdate(vocabularyStore, (error, done) => {
                     if (error) {
                         console.log(error);
                         return callback(error, false);
                     } else {
-                        var t4 = performance.now();
+                        //var t4 = performance.now();
                         //console.log("Call to getImports took " + (t1 - t0) + " milliseconds.");
                         //console.log("Call to readVocabularies took " + (t2 - t1) + " milliseconds.");
                         //console.log("Call to updateVocabularyStore took " + (t3 - t2) + " milliseconds.");
@@ -547,27 +548,27 @@ const FRBRooUtil = {
         //console.log(Date());
         let vocabularyURLs = [];
         let vocabData = [];
-        var t0 = performance.now();
+        //var t0 = performance.now();
         RDFaUtil.listVocabularyURLs(document, vocabularyURLs);
         // read initial vocabularies
         //console.log("FRBRooUtil loadVocabularies - vocabularyURLs:", vocabularyURLs);
         //console.log(Date());
-        var t1 = performance.now();
+        //var t1 = performance.now();
         if (vocabularyURLs.length === 0) {
             // make an empty store if there are no vocabularies
             let vocabularyStore = FRBRooUtil.makeVocabularyStore([]);
-            return callback(null, null);
+            return callback(null, vocabularyStore);
         }
         FRBRooUtil.readVocabularies(vocabularyURLs, (error, vocabularies) => {
             if (error) {
                 return callback(error, null);
             } else {
-                var t2 = performance.now();
+                //var t2 = performance.now();
                 // make vocabulary store
                 //console.log("vocabularies:", vocabularies);
                 //console.log(Date());
                 let vocabularyStore = FRBRooUtil.makeVocabularyStore(vocabularies);
-                var t3 = performance.now();
+                //var t3 = performance.now();
                 //console.log("vocabularyStore:", vocabularyStore);
                 //console.log(Date());
                 // iterate: 1) get imports, 2) update store
@@ -575,7 +576,7 @@ const FRBRooUtil = {
                     if (error) {
                         return callback(error, vocabularyStore);
                     } else {
-                        var t4 = performance.now();
+                        //var t4 = performance.now();
                         //console.log("Call to listVocabularyURLs took " + (t1 - t0) + " milliseconds.");
                         //console.log("Call to readVocabularies took " + (t2 - t1) + " milliseconds.");
                         //console.log("Call to makeVocabularyStore took " + (t3 - t2) + " milliseconds.");
