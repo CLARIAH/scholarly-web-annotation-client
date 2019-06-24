@@ -22,7 +22,8 @@ class ResourceList extends React.Component {
         this.setState({view: e.target.name});
     }
 
-    listResources(topResources, resourceMaps) {
+    //listResources(topResources, resourceMaps) {
+    listResources(topResources) {
         //console.log("topResources:", topResources);
         //console.log("resourceMaps:", resourceMaps);
         let resourceIds = Object.keys(AnnotationStore.resourceIndex);

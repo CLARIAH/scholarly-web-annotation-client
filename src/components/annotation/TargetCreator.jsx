@@ -4,7 +4,6 @@
 import React from 'react';
 import CandidateList from './CandidateList.jsx';
 import SelectedList from './SelectedList.jsx';
-import RDFaUtil from './../../util/RDFaUtil.js';
 
 export default class TargetCreator extends React.Component {
     constructor(props) {

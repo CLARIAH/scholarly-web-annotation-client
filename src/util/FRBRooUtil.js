@@ -5,8 +5,6 @@ import parse from "rdflib/lib/parse";
 import Namespace from "rdflib/lib/namespace";
 import DataFactory from "rdflib/lib/data-factory";
 import rdf from "rdflib";
-import DOMUtil from "./DOMUtil.js";
-import StringUtil from "./StringUtil.js";
 import RDFaUtil from "./RDFaUtil.js";
 import VocabularyUtil from "./VocabularyUtil.js";
 
@@ -43,67 +41,6 @@ const FRBRooUtil = {
         } else {
             return true;
         }
-    },
-
-    loadExternalResources(vocabularyStore, callback) {
-        //console.log(vocabularyStore);
-        let resourceStore = {};
-        resourceStore.relations = FRBRooUtil.getRelations(vocabularyStore);
-        //console.log("FRBRooUtil - loadExternalResources resourceStore:", resourceStore);
-        FRBRooUtil.checkExternalResources((error, doIndexing, triples) => {
-            if (error) {
-                console.log(error);
-                return callback(error, doIndexing, null);
-
-            } else if (!doIndexing) {
-                return callback(null, doIndexing, null);
-            } else {
-                resourceStore.triples = triples;
-                //console.log("doIndexing:", doIndexing);
-                return callback(null, doIndexing, resourceStore);
-            }
-        });
-    },
-
-    checkExternalResources(callback) {
-        let externalResourcesRefs = FRBRooUtil.getAlternateLinkRefs();
-        var doIndexing = false;
-        if (externalResourcesRefs.length === 0) {
-            return callback(null, doIndexing, null);
-        }
-        externalResourcesRefs.forEach((ref) => {
-            doIndexing = true;
-            let store = FRBRooUtil.newStore();
-            FRBRooUtil.readExternalResources(ref.url, (error, externalRelations) => {
-                if (error) {
-                    console.log("Error reading external resources for URL", ref);
-                    console.log(error);
-                    return callback(error, doIndexing, store);
-                } else {
-                    try {
-                        FRBRooUtil.storeExternalResources(store, externalRelations, ref.url, ref.mimeType);
-                    } catch(error) {
-                        console.log("Error storing external resources:", externalRelations);
-                        return callback(error, false, null);
-                    }
-                    return callback(null, doIndexing, store);
-                }
-            });
-        });
-    },
-
-    readExternalResources(url, callback) {
-        fetch(url, {
-            method: "GET"
-        }).then((response) => {
-            return response.text();
-        }).then((relationsData) => {
-            return callback(null, relationsData);
-        }).catch((error) => {
-            console.log("Error reading specified vocabulary:", url);
-            console.log(error);
-            return callback(error, null);
-        });
     },
 
     storeExternalResources(store, frbrooRelationsString, baseURI, mimeType) {
@@ -163,9 +100,6 @@ const FRBRooUtil = {
         var subjectRelations = store.statementsMatching(node, undefined, undefined);
         var objectRelations = store.statementsMatching(undefined, undefined, node);
         subjectRelations.forEach((relation) => {
-            //console.log("resource:", resource);
-            //console.log("\tpredicate:", relation.predicate.value);
-            //console.log("\tobject:", relation.object.value);
             if (relation.predicate.value === FRBRooUtil.RDF('type').value) {
                 FRBRooUtil.addRDFTypeProperty(properties, relation.object.value);
             }
@@ -180,8 +114,6 @@ const FRBRooUtil = {
     getRDFTypeLabels(typeList) {
         if (!Array.isArray(typeList)) {
             return null;
-            //console.log("typeList:", typeList);
-            //throw Error("typeList should be an array of RDF type strings");
         }
         return typeList.map((rdfType) => {
             let index = rdfType.indexOf("#");
@@ -213,11 +145,33 @@ const FRBRooUtil = {
         }
     },
 
+    indexResources() {
+        return new Promise((resolve, reject) => {
+            let resourceData = {}
+            RDFaUtil.indexRDFa().then((resourceIndex) => {
+                resourceData.resourceIndex = resourceIndex;
+                let resources = Object.keys(resourceIndex.resources);
+                FRBRooUtil.loadVocabularies()
+                    .then(FRBRooUtil.loadExternalResources)
+                    .then((resourceStore) => {
+                        resourceData.resourceStore = resourceStore;
+                        resourceData.representedResourceMap = FRBRooUtil.mapRepresentedResources(resourceStore, resources);
+                        resourceData.externalResourceIndex = FRBRooUtil.indexExternalResources(resourceStore, resources);
+                        return resolve(resourceData);
+                    }, (error) => {
+                        reject(error);
+                    });
+            });
+        });
+    },
+
     indexExternalResources(resourceStore, resources) {
         let externalResourceIndex = {};
+        if (!resourceStore.triples) {
+            return externalResourceIndex;
+        }
         resources.forEach((resource) => {
             let relation = FRBRooUtil.resourceGetParentRelation(resourceStore, resource);
-            //console.log(resource, relation);
             if (relation) {
                 externalResourceIndex[resource] = relation;
                 let rdfType = FRBRooUtil.getRDFType(resourceStore, resource);
@@ -233,7 +187,6 @@ const FRBRooUtil = {
     },
 
     indexExternalParentResource(resourceStore, index, resource) {
-        //console.log("FRBRooUtil - indexExternalParentResource:", resource);
         if (!FRBRooUtil.isKnownResource(resourceStore, resource)) {
             throw Error ("parentResource does not exist: " + resource);
         }
@@ -249,7 +202,6 @@ const FRBRooUtil = {
                 FRBRooUtil.indexExternalParentResource(resourceStore, index, relation.parentResource);
             }
         }
-        //console.log("FRBRooUtil - indexExternalParentResource:", resource, resourceInfo);
         index[resource] = resourceInfo;
     },
 
@@ -258,9 +210,10 @@ const FRBRooUtil = {
             throw Error("resources should be an array of resource IDs");
         }
         let representedResourceIndex = {};
-        //console.log(hasRepresentation);
+        if (!resourceStore.triples) {
+            return representedResourceIndex;
+        }
         resources.forEach((resource) => {
-            //console.log("FRBRooUtil - resource:", resource);
             FRBRooUtil.mapRepresentedObjectResources(resourceStore, resource, representedResourceIndex);
             FRBRooUtil.mapRepresentedSubjectResources(resourceStore, resource, representedResourceIndex);
             FRBRooUtil.mapFragmentObjectResources(resourceStore, resource, representedResourceIndex);
@@ -337,27 +290,112 @@ const FRBRooUtil = {
         }
     },
 
-    readVocabularies(vocabularyURLs, callback) {
-        let vocabularies = [];
-        if (vocabularyURLs.length === 0) {
-            return callback(null, vocabularies);
-        }
-        let lastURL = vocabularyURLs[vocabularyURLs.length - 1];
-        vocabularyURLs.forEach((vocabularyURL) => {
-            FRBRooUtil.readVocabulary(vocabularyURL, (error, vocabulary) => {
-                if (error) {
-                    return callback(error, null);
-                } else  {
-                    vocabularies.push(vocabulary);
-                    if (vocabularyURL === lastURL) {
-                        return callback(null, vocabularies);
+    loadExternalResources(vocabularyStore) {
+        return new Promise((resolve, reject) => {
+            var externalStore = {doIndexing: false, triples: null, relations: null};
+            let externalResourcesRefs = FRBRooUtil.getAlternateLinkRefs();
+            if (!FRBRooUtil.hasExternalResources()) {
+                return resolve(externalStore);
+            }
+            externalStore.relations = FRBRooUtil.getRelations(vocabularyStore);
+            //let externalResourcesRefs = FRBRooUtil.getAlternateLinkRefs();
+            externalStore.triples = FRBRooUtil.newStore();
+            externalResourcesRefs.forEach((ref) => {
+                externalStore.doIndexing = true;
+                FRBRooUtil.readExternalResources(ref.url).then((externalRelations) => {
+                    externalStore.externalRelations = externalRelations;
+                    try {
+                        FRBRooUtil.storeExternalResources(externalStore.triples, externalRelations, ref.url, ref.mimeType);
+                    } catch(error) {
+                        console.log("Error storing external resources:", externalRelations);
+                        return reject(error);
                     }
-                }
+                    return resolve(externalStore);
+                }, (error) => {
+                    console.log("Error reading external resources for URL", ref);
+                    console.log(error);
+                    return reject(error);
+
+                });
             });
         });
     },
 
-    readVocabulary(vocabularyURL, callback) {
+    hasExternalResources() {
+        let externalResourcesRefs = FRBRooUtil.getAlternateLinkRefs();
+        return (externalResourcesRefs.length > 0);
+    },
+
+    checkExternalResources() {
+        return new Promise((resolve, reject) => {
+            let externalResourcesRefs = FRBRooUtil.getAlternateLinkRefs();
+            var data = {doIndexing: false, externalStore: null};
+            if (externalResourcesRefs.length === 0) {
+                return resolve(data);
+            }
+            data.externalStore = FRBRooUtil.newStore();
+            externalResourcesRefs.forEach((ref) => {
+                data.doIndexing = true;
+                FRBRooUtil.readExternalResources(ref.url).then((externalRelations) => {
+                    try {
+                        FRBRooUtil.storeExternalResources(data.externalStore, externalRelations, ref.url, ref.mimeType);
+                    } catch(error) {
+                        console.log("Error storing external resources:", externalRelations);
+                        return reject(error);
+                    }
+                    return resolve(data);
+                }, (error) => {
+                    console.log("Error reading external resources for URL", ref);
+                    console.log(error);
+                    return reject(error);
+
+                });
+            });
+        });
+    },
+
+    readExternalResources(url) {
+        return new Promise((resolve, reject) => {
+            var status = null;
+            fetch(url, {
+                method: "GET"
+            }).then((response) => {
+                if (!response.ok) {
+                    let error = new Error('HTTP error, status = ' + response.status);
+                    reject(error);
+                }
+                return response.text();
+            }).then((relationsData) => {
+                return resolve(relationsData);
+            }).catch((error) => {
+                console.log("Error reading specified vocabulary:", url);
+                console.log(error);
+                return reject(error);
+            });
+        });
+    },
+
+    readVocabularies(vocabularyURLs) {
+        return new Promise((resolve, reject) => {
+            let vocabularies = [];
+            if (vocabularyURLs.length === 0) {
+                return resolve(vocabularies);
+            }
+            let lastURL = vocabularyURLs[vocabularyURLs.length - 1];
+            vocabularyURLs.forEach((vocabularyURL) => {
+                FRBRooUtil.readVocabulary(vocabularyURL).then((vocabulary) => {
+                    vocabularies.push(vocabulary);
+                    if (vocabularyURL === lastURL) {
+                        return resolve(vocabularies);
+                    }
+                }, (error) => {
+                    return reject(error);
+                });
+            });
+        });
+    },
+
+    readVocabulary(vocabularyURL) {
         if (vocabularyURL.endsWith("#")) {
             vocabularyURL = vocabularyURL.substring(0, vocabularyURL.length - 1);
         }
@@ -365,13 +403,13 @@ const FRBRooUtil = {
             url: vocabularyURL,
             data: null
         }
-        FRBRooUtil.readExternalResources(vocabularyURL, (error, data) => {
-            if (error) {
-                return callback(error, null);
-            } else {
+        return new Promise((resolve, reject) => {
+            FRBRooUtil.readExternalResources(vocabularyURL).then((data) => {
                 vocab.data = data;
-                return callback(null, vocab);
-            }
+                return resolve(vocab);
+            }, (error) => {
+                return reject(error);
+            });
         });
     },
 
@@ -418,7 +456,6 @@ const FRBRooUtil = {
         let relations = {includes: [], isIncludedIn: []};
         let includesProperty = VocabularyUtil.getLabelClass(vocabularyStore.triples, 'includes');
         if (!includesProperty) {
-            //console.log("FRBRooUtil - vocabularyStore", vocabularyStore);
             throw Error("Cannot read base includes property");
         }
         let includesSubProperties = VocabularyUtil.getDescendantProperties(vocabularyStore.triples, includesProperty);
@@ -430,9 +467,6 @@ const FRBRooUtil = {
                 relations.isIncludedIn.push(inverse);
             }
         });
-        //console.log("includesProperty:", includesProperty);
-        //console.log("includesSubProperties:", includesSubProperties);
-        //console.log("relations:", relations);
         return relations;
     },
 
@@ -445,9 +479,6 @@ const FRBRooUtil = {
         relations.isRepresentationOf = relations.hasRepresentation.map((includeProperty) => {
             return VocabularyUtil.getInverseOfRelation(vocabularyStore.triples, includeProperty);
         })
-        //console.log("includesProperty:", includesProperty);
-        //console.log("includesSubProperties:", includesSubProperties);
-        //console.log("relations:", relations);
         return relations;
     },
 
@@ -473,10 +504,7 @@ const FRBRooUtil = {
         vocabularyStore.vocabularies.forEach((vocabularyURL) => {
             let vocabularyNode = rdf.sym(vocabularyURL);
             let importNode = rdf.sym(FRBRooUtil.importPredicate);
-            //console.log("vocabularyNode:", vocabularyNode);
-            //console.log("importNode:", importNode);
             let triples = vocabularyStore.triples.each(vocabularyNode, importNode, undefined);
-            //console.log("triples:", triples);
             if (vocabularyURL === FRBRooUtil.baseAnnotationOntologyURL) {
                 // don't import beyond the base annotation ontology
                 return;
@@ -508,85 +536,49 @@ const FRBRooUtil = {
         });
     },
 
-    importAndUpdate(vocabularyStore, callback) {
-        if (!FRBRooUtil.isValidVocabularyStore(vocabularyStore)) {
-            throw Error("Invalid vocabularyStore given");
-        }
-        //var t0 = performance.now();
-        let imports = FRBRooUtil.getImports(vocabularyStore);
-        //var t1 = performance.now();
-        //console.log("imports:", imports);
-        if (imports.length > 0) {
-            FRBRooUtil.readVocabularies(imports, (error, vocabularies) => {
-                if (error) {
-                    return callback(error, false);
-                }
-                //var t2 = performance.now();
-                FRBRooUtil.updateVocabularyStore(vocabularyStore, vocabularies);
-                //var t3 = performance.now();
-                FRBRooUtil.importAndUpdate(vocabularyStore, (error, done) => {
-                    if (error) {
-                        console.log(error);
-                        return callback(error, false);
-                    } else {
-                        //var t4 = performance.now();
-                        //console.log("Call to getImports took " + (t1 - t0) + " milliseconds.");
-                        //console.log("Call to readVocabularies took " + (t2 - t1) + " milliseconds.");
-                        //console.log("Call to updateVocabularyStore took " + (t3 - t2) + " milliseconds.");
-                        //console.log("Call to importAndUpdate took " + (t4 - t3) + " milliseconds.");
-                        return callback(null, done);
-                    }
+    importAndUpdate(vocabularyStore) {
+        return new Promise((resolve, reject) => {
+            if (!FRBRooUtil.isValidVocabularyStore(vocabularyStore)) {
+                throw Error("Invalid vocabularyStore given");
+            }
+            let imports = FRBRooUtil.getImports(vocabularyStore);
+            if (imports.length > 0) {
+                FRBRooUtil.readVocabularies(imports).then((vocabularies) => {
+                    FRBRooUtil.updateVocabularyStore(vocabularyStore, vocabularies);
+                    FRBRooUtil.importAndUpdate(vocabularyStore).then((done) => {
+                        return resolve(done);
+                    }, (error) => {
+                        return reject(error);
+                    });
+                }, (error) => {
+                    return reject(error);
                 });
-            });
-        } else {
-            return callback(null, true);
-        }
-    },
-
-    loadVocabularies(callback) {
-        //console.log("FRBRooUtil loadVocabularies - listing vocabulary URLs");
-        //console.log(Date());
-        let vocabularyURLs = [];
-        let vocabData = [];
-        //var t0 = performance.now();
-        RDFaUtil.listVocabularyURLs(document, vocabularyURLs);
-        // read initial vocabularies
-        //console.log("FRBRooUtil loadVocabularies - vocabularyURLs:", vocabularyURLs);
-        //console.log(Date());
-        //var t1 = performance.now();
-        if (vocabularyURLs.length === 0) {
-            // make an empty store if there are no vocabularies
-            let vocabularyStore = FRBRooUtil.makeVocabularyStore([]);
-            return callback(null, vocabularyStore);
-        }
-        FRBRooUtil.readVocabularies(vocabularyURLs, (error, vocabularies) => {
-            if (error) {
-                return callback(error, null);
             } else {
-                //var t2 = performance.now();
-                // make vocabulary store
-                //console.log("vocabularies:", vocabularies);
-                //console.log(Date());
-                let vocabularyStore = FRBRooUtil.makeVocabularyStore(vocabularies);
-                //var t3 = performance.now();
-                //console.log("vocabularyStore:", vocabularyStore);
-                //console.log(Date());
-                // iterate: 1) get imports, 2) update store
-                FRBRooUtil.importAndUpdate(vocabularyStore, (error, updatesDone) => {
-                    if (error) {
-                        return callback(error, vocabularyStore);
-                    } else {
-                        //var t4 = performance.now();
-                        //console.log("Call to listVocabularyURLs took " + (t1 - t0) + " milliseconds.");
-                        //console.log("Call to readVocabularies took " + (t2 - t1) + " milliseconds.");
-                        //console.log("Call to makeVocabularyStore took " + (t3 - t2) + " milliseconds.");
-                        //console.log("Call to importAndUpdate took " + (t4 - t3) + " milliseconds.");
-                        //console.log(Date());
-                        return callback(null, vocabularyStore);
-                    }
-                });
+                return resolve(true);
             }
         });
+    },
+
+    loadVocabularies() {
+        return new Promise((resolve, reject) => {
+            let vocabData = [];
+            let vocabularyURLs = RDFaUtil.listVocabularyURLs(document);
+            if (vocabularyURLs.length === 0) {
+                let vocabularyStore = FRBRooUtil.makeVocabularyStore([]);
+                return resolve(vocabularyStore);
+            }
+            FRBRooUtil.readVocabularies(vocabularyURLs).then((vocabularies) => {
+                let vocabularyStore = FRBRooUtil.makeVocabularyStore(vocabularies);
+                // iterate: 1) get imports, 2) update store
+                FRBRooUtil.importAndUpdate(vocabularyStore).then((updatesDone) => {
+                    return resolve(vocabularyStore);
+                }, (error) => {
+                    return reject(error);
+                });
+            }, (error) => {
+                return reject(error);
+            });
+        })
     },
 
     determineResourceHierarchy(resourceStore, resource) {
@@ -674,7 +666,7 @@ const FRBRooUtil = {
         });
     },
 
-    createBreadcrumbTrail(externalResourceIndex, resourceId) {
+    createBreadcrumbTrail(resourceId, externalResourceIndex) {
         var rootFound = false;
         var labelTrail = [];
         while (!rootFound) {

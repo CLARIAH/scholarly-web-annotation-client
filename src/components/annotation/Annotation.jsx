@@ -5,12 +5,6 @@ import AnnotationActions from './../../flux/AnnotationActions.js';
 import AnnotationStore from './../../flux/AnnotationStore.js';
 import AppCollectionStore from '../../flux/CollectionStore.js';
 import FlexModal from './../FlexModal';
-import AnnotationUtil from './../../util/AnnotationUtil.js';
-import SelectionUtil from './../../util/SelectionUtil.js';
-import TargetUtil from './../../util/TargetUtil.js';
-import TimeUtil from '../../util/TimeUtil';
-import RDFaUtil from '../../util/RDFaUtil';
-import FRBRooUtil from '../../util/FRBRooUtil';
 
 class Annotation extends React.Component {
     constructor(props) {
@@ -20,7 +14,7 @@ class Annotation extends React.Component {
         }
     }
     componentDidMount() {
-        this.setState({targetDOMElements: TargetUtil.mapTargetsToDOMElements(this.props.annotation)});
+        this.setState({targetDOMElements: AnnotationActions.mapTargetsToDOMElements(this.props.annotation)});
     }
     canEdit() {
         return this.props.currentUser && this.props.currentUser.username === this.props.annotation.creator ? true : false;
@@ -56,7 +50,7 @@ class Annotation extends React.Component {
         }
     }
     toggleHighlight() {
-        TargetUtil.toggleHighlight(this.state.targetDOMElements, this.state.highlighted);
+        AnnotationActions.toggleHighlight(this.state.targetDOMElements, this.state.highlighted);
         this.setState({highlighted: this.state.highlighted ? false : true});
     }
     computeClass() {
@@ -79,9 +73,9 @@ class Annotation extends React.Component {
         let component = this;
         var text = "";
         if (target.type === "Text") {
-            text = TargetUtil.getTargetText(target, source);
+            text = AnnotationActions.getTargetText(target, source);
         } else if (target.type === "Image") {
-            let selector = TargetUtil.getTargetMediaFragment(target);
+            let selector = AnnotationActions.getTargetMediaFragment(target);
             let rect = selector.rect;
             let topLeft = selector.rect.x + ',' + selector.rect.y;
             let bottomRight = selector.rect.x + selector.rect.w + ',' + (selector.rect.y + selector.rect.h);
@@ -91,22 +85,18 @@ class Annotation extends React.Component {
                 </span>
             )
         } else if (target.type === "Video") {
-            let selector = TargetUtil.getTargetMediaFragment(target);
+            let selector = AnnotationActions.getTargetMediaFragment(target);
             let segment = selector.interval;
             text = (
                 <span>
-                    {'[' + TimeUtil.formatTime(segment.start) + ' - ' + TimeUtil.formatTime(segment.end) + ']'}
+                    {'[' + AnnotationActions.formatTime(segment.start) + ' - ' + AnnotationActions.formatTime(segment.end) + ']'}
                 </span>
             );
         }
-        //console.log("createResourceTarget - text:", text);
-        //console.log("source:", source);
         if (text.length > 40) {
             text = text.substr(0, 37) + "...";
         }
-        //console.log("Annotation - source:", source);
-        let breadcrumbs = RDFaUtil.createBreadcrumbTrail(source.data.rdfaResource);
-        //console.log("Annotation - breadcrumbs:", breadcrumbs);
+        let breadcrumbs = AnnotationActions.createBreadcrumbTrail(source.data.rdfaResource);
         let breadcrumbLabels = breadcrumbs.map((crumb, index) => {
             let next = " > ";
             if (!index)
@@ -145,13 +135,10 @@ class Annotation extends React.Component {
 
     createExternalTarget(target, source, targetCount) {
         var text = "";
-        //console.log(target);
-        //console.log("createExternalTarget - source:", source);
         if (target.type === "Text") {
-            text = TargetUtil.getTargetText(target, source);
+            text = AnnotationActions.getTargetText(target, source);
         }
-        let breadcrumbs = FRBRooUtil.createBreadcrumbTrail(AnnotationStore.externalResourceIndex, target.source);
-        //console.log("breadcrumbs:", breadcrumbs);
+        let breadcrumbs = AnnotationActions.createBreadcrumbTrail(target.source);
         let breadcrumbLabels = breadcrumbs.map((crumb, index) => {
             let next = " > ";
             if (!index)
@@ -187,7 +174,7 @@ class Annotation extends React.Component {
     }
 
     createAnnotationTarget(target, source) {
-        let body = AnnotationUtil.extractBodies(source.data)[0];
+        let body = AnnotationActions.extractBodies(source.data)[0];
         let label = body.type;
         let text = body.value;
         return (
@@ -209,7 +196,7 @@ class Annotation extends React.Component {
         let annotation = component.props.annotation;
         var bodyCount = 0;
         var timestamp = (new Date(annotation.created)).toLocaleString();
-        var bodies = AnnotationUtil.extractBodies(annotation).map((body) => {
+        var bodies = AnnotationActions.extractBodies(annotation).map((body) => {
             bodyCount++;
             var bodyText = body.value;
             //if (bodyText.length > 100) {
@@ -236,23 +223,16 @@ class Annotation extends React.Component {
             );
         });
         var targetCount = 0;
-        //console.log("annotation:", annotation);
-        var targets = AnnotationUtil.extractTargets(annotation).map((target) => {
-            //console.log("target:", target);
+        var targets = AnnotationActions.extractTargets(annotation).map((target) => {
             try {
                 targetCount++;
-                //console.log(target);
-                let source = AnnotationActions.lookupIdentifier(AnnotationUtil.extractTargetIdentifier(target));
-                //console.log("Annotation render - source:", source);
+                let source = AnnotationActions.lookupIdentifier(AnnotationActions.extractTargetIdentifier(target));
                 var text = "";
                 var label;
                 if (source.type === "external") {
-                    //console.log("createExternalTarget");
                     return this.createExternalTarget(target, source, targetCount);
                 }
                 if (source.type === "resource") {
-                    //console.log("type: resource");
-                    //console.log("source:", source);
                     return this.createResourceTarget(target, source, targetCount);
                 } else if (source.type === "annotation") {
                     return this.createAnnotationTarget(target, source);
@@ -261,7 +241,6 @@ class Annotation extends React.Component {
                 }
             } catch (error) {
                 // filter out annotation targets that result in errors;
-                //console.log("ERROR in annotation target:", target)
                 return undefined;
             }
         }).filter((target) => { return target !== undefined });

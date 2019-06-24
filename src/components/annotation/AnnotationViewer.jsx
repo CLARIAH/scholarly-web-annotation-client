@@ -11,7 +11,6 @@
 import AnnotationCreator from './AnnotationCreator.jsx';
 import AnnotationList from './AnnotationList.jsx';
 import React from 'react';
-import AnnotationUtil from './../../util/AnnotationUtil.js';
 import AppAnnotationStore from './../../flux/AnnotationStore';
 import AnnotationActions from '../../flux/AnnotationActions.js';
 

@@ -167,7 +167,6 @@ const SelectionUtil = {
     },
 
     setSelection : function(element, selection, mimeType) {
-        console.log("SelectionUtil - setSelection");
         SelectionUtil.checkDOMElement(element);
         SelectionUtil.currentSelection = {
             startNode: element,
@@ -339,8 +338,6 @@ const SelectionUtil = {
         let selection = SelectionUtil.currentSelection;
         var startOffset = SelectionUtil.getTrimmedOffset(selection.startNode, selection.startOffset);
         var endOffset = SelectionUtil.getTrimmedOffset(selection.endNode, selection.endOffset);
-        //console.log("offsets:", startOffset, endOffset);
-        //let textNodes = RDFaUtil.getRDFaTextNodes(selection.containerNode)
         let textNodes = RDFaUtil.getRDFaTextNodesExtended(selection.containerNode)
         let ignoreNodes = RDFaUtil.getRDFaIgnoreNodes(selection.containerNode);
         if (ignoreNodes.length === 0)
@@ -358,7 +355,6 @@ const SelectionUtil = {
             if (selection.startNode === textNode.node || startNodePreceeds) {
                 include = true;
             }
-            //console.log("#" + displayText + "#");
             if (selection.startNode === textNode.node) {
                 displayText = displayText.substr(startOffset);
             }
@@ -367,7 +363,6 @@ const SelectionUtil = {
             }
             if (include){
                 if (textNode.ignore) {
-                    //console.log("IGNORING displayText: #" + displayText + "#");
                     let ignoreOffset = unfilteredText.indexOf(displayText);
                     selection.selectionText += unfilteredText.substr(0, ignoreOffset);
                     let chunkLength = ignoreOffset + displayText.length;
@@ -376,9 +371,6 @@ const SelectionUtil = {
                     let chunkLength = unfilteredText.indexOf(displayText.trim()) + displayText.trim().length;
                     selection.selectionText += unfilteredText.substr(0, chunkLength);
                     unfilteredText = unfilteredText.substr(chunkLength);
-                    //console.log("displayText: #" + displayText.trim() + "#");
-                    //console.log("unfilteredText: #" + unfilteredText + "#");
-                    //console.log("selection.selectionText: #" + selection.selectionText + "#");
                 }
                 textChunks.push(displayText.trim());
             }
@@ -388,10 +380,6 @@ const SelectionUtil = {
         });
         // if there is any trailing whitespace in the unfiltered text, move it to the filtered text
         selection.selectionText += unfilteredText;
-        console.log(unfilteredText);
-        console.log(textChunks);
-        //selection.selectionText = allText;
-        //console.log("textNodes:", textNodes);
     },
 
     getTrimmedOffset : function(node, offset) {

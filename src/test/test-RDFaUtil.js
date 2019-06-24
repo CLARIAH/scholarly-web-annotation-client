@@ -12,10 +12,6 @@ const fs = require("fs");
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 import RDFaUtil from "../util/RDFaUtil.js";
-import TargetUtil from "../util/TargetUtil.js";
-import FRBRooUtil from "../util/FRBRooUtil.js";
-import AnnotationActions from "../flux/AnnotationActions.js";
-import AnnotationStore from "../flux/AnnotationStore.js";
 const $rdf = require("rdflib");
 
 let localURL = "http://localhost:3001/";
@@ -59,28 +55,6 @@ var loadPlainPage = () => {
     loadPage(htmlSource);
     let observerNodes = document.getElementsByClassName("annotation-target-observer");
     RDFaUtil.setObserverNodes(observerNodes);
-}
-
-let frbrooRelationsString = `
-@prefix hi: <http://boot.huygens.knaw.nl/vgdemo/editionannotationontology.ttl#> .
-@prefix vg: <http://boot.huygens.knaw.nl/vgdemo/vangoghannotationontology.ttl#> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-
-<urn:vangogh/letter=001> rdf:type vg:Letter.
-<urn:vangogh/letter=001> hi:hasRepresentation <urn:vangogh/letter=001:repr=original>.
-<urn:vangogh/letter=001> hi:hasRepresentation <urn:vangogh/letter=001:repr=transcript>.
-`;
-
-var prefillStore = () => {
-    FRBRooUtil.newStore();
-    try {
-        let mimeType = "text/turtle";
-        let baseUri = "http://localhost:3001/frbroo_alternate.ttl";
-        $rdf.parse(frbrooRelationsString, FRBRooUtil.rdfStore, baseUri, mimeType);
-        FRBRooUtil.rdfStore = FRBRooUtil.rdfStore;
-    } catch (error) {
-        console.log(error);
-    }
 }
 
 
@@ -152,6 +126,35 @@ var loadIgnorable = () => {
     let a = document.getElementsByTagName("div");
     RDFaUtil.setObserverNodes(observerNodes);
 }
+
+describe("RDFaUtil", () => {
+
+    let vocabulary = "http://boot.huygens.knaw.nl/vgdemo/vangoghannotationontology.ttl#";
+
+    describe("listVocabularyURLs", () => {
+
+        it("should return an array", (done) => {
+            loadNonRDFaPage();
+            let vocabularyURLs = RDFaUtil.listVocabularyURLs(window.document);
+            expect(Array.isArray(vocabularyURLs)).to.equal(true);
+            done();
+        });
+
+        it("should return an empty list of no vocabularies are specified", (done) => {
+            loadNonRDFaPage();
+            let vocabularyURLs = RDFaUtil.listVocabularyURLs(window.document);
+            expect(vocabularyURLs.length).to.equal(0);
+            done();
+        });
+
+        it("should return an list with one vocabulary if it is specified as vocab attribute", (done) => {
+            loadRDFaPage();
+            let vocabularyURLs = RDFaUtil.listVocabularyURLs(window.document);
+            expect(vocabularyURLs.length).to.equal(1);
+            done();
+        });
+    });
+});
 
 describe("RDFaUtil parsing HTML with ignorable elements", () => {
 
@@ -306,7 +309,8 @@ describe("RDFaUtil parsing HTML with ignorable elements", () => {
 });
 
 describe("RDFaUtil getting RDF Type URLs", () => {
-    it("should return an error when non-URL label is passed without vocabulary", (done) => {
+
+    it("should return null when non-URL label is passed without vocabulary", (done) => {
         let vocabulary = null;
         let labels = ["ParagraphInLetter"];
         let prefixIndex = {};
@@ -332,8 +336,7 @@ describe("RDFaUtil parsing page with multiple abouts", () => {
     });
 
     it("should index two nodes", (done) => {
-        RDFaUtil.indexRDFa((error, index) => {
-            expect(error).to.equal(null);
+        RDFaUtil.indexRDFa().then((index) => {
             let resources = Object.keys(index.resources);
             expect(index.resources).to.have.property("urn:vangogh:let001");
         });
@@ -341,9 +344,8 @@ describe("RDFaUtil parsing page with multiple abouts", () => {
     });
 
     it("should use vocab defined at higher level correctly", (done) => {
-        RDFaUtil.indexRDFa((error, index) => {
+        RDFaUtil.indexRDFa().then((index) => {
             let vocabulary = "http://boot.huygens.knaw.nl/vgdemo/editionannotationontology.ttl#";
-            expect(error).to.equal(null);
             let resources = Object.keys(index.resources);
             expect(index.resources).to.have.property("urn:vangogh:let001");
             let resource = index.resources["urn:vangogh:let001"];
@@ -352,30 +354,6 @@ describe("RDFaUtil parsing page with multiple abouts", () => {
         done();
     });
 })
-
-describe("RDFaUtil extracting relations", () => {
-
-    var resourceEntry = {
-        rdfaResource: "urn:vangogh:letter:001.para.7.original",
-        rdfaVocabulary: [ "http://boot.huygens.knaw.nl/vgdemo/editionannotationontology.ttl#" ],
-        domNode: null,
-        rdfType: [ "hi:EditionText" ],
-        rdfTypeURIs: [ "http://boot.huygens.knaw.nl/vgdemo/editionannotationontology.ttl#EditionText" ],
-        rdfaProperty: "hasTextPart",
-        text: "Vincent",
-        parentResource: "urn:vangogh:letter:001.para.6.original"
-    }
-
-    var incompleteEntry = {
-        rdfaResource: undefined,
-        rdfaProperty: "hasTextPart",
-        parentResource: "urn:vangogh:letter:001.para.6.original"
-    }
-
-    it("should throw an error when properties are undefined", (done) => {
-        done();
-    });
-});
 
 describe("RDFaUtil parse of non-RDFa-enriched page", () => {
 
@@ -440,11 +418,20 @@ describe("RDFaUtil parse of FRBR letter", () => {
             done();
         });
 
+        it("should store index as a property", (done) => {
+            let resourceId = "urn:vangogh:letter:001.original";
+            RDFaUtil.indexRDFa().then((index) => {
+                expect(RDFaUtil.rdfaIndex).to.not.equal(null);
+                expect(RDFaUtil.rdfaIndex.hasOwnProperty("resources")).to.equal(true);
+                expect(RDFaUtil.rdfaIndex.resources.hasOwnProperty(resourceId)).to.equal(true);
+                done();
+            });
+        })
+
         it("should find EditionText in index", (done) => {
             let typeOf = "hi:EditionText";
             let resourceId = "urn:vangogh:letter:001.original";
-            RDFaUtil.indexRDFa((error, index) => {
-                expect(error).to.equal(null);
+            RDFaUtil.indexRDFa().then((index) => {
                 expect(index).to.not.equal(null);
                 expect(index.resources).to.not.equal(null);
                 let entry = index.resources[resourceId];
@@ -454,6 +441,26 @@ describe("RDFaUtil parse of FRBR letter", () => {
             });
         });
     });
+
+    describe("lookupResource", () => {
+
+        before((done) => {
+            let observerNodes = document.getElementsByClassName("annotation-target-observer");
+            RDFaUtil.setObserverNodes(observerNodes);
+            done();
+        });
+
+        it("should find entry for RDFa resource", (done) => {
+            let typeOf = "hi:EditionText";
+            let resourceId = "urn:vangogh:letter:001.original";
+            RDFaUtil.indexRDFa().then((resourceIndex) => {
+                let entry = RDFaUtil.lookupResource(resourceId, resourceIndex);
+                expect(entry).to.not.equal(null);
+                done();
+            });
+        });
+    });
+
 
     describe("after indexing resource", () => {
 
@@ -466,8 +473,7 @@ describe("RDFaUtil parse of FRBR letter", () => {
         it("should be able to extract relations", (done) => {
             let typeOf = "hi:EditionText";
             let resourceId = "urn:vangogh:letter:001.original";
-            RDFaUtil.indexRDFa((error, index) => {
-                expect(error).to.equal(null);
+            RDFaUtil.indexRDFa().then((index) => {
                 expect(index.relations).to.not.equal(null);
                 expect(index.relations[resourceId]).to.not.be.undefined;
                 let relations = index.relations[resourceId];
@@ -516,7 +522,7 @@ describe("RDFaUtil parse of test letter. ", () => {
         var index = null;
 
         before((done) => {
-            RDFaUtil.indexRDFa((error, newIndex) => {
+            RDFaUtil.indexRDFa().then((newIndex) => {
                 index = newIndex;
                 done();
             });
@@ -539,7 +545,7 @@ describe("RDFaUtil parse of test letter 2. ", () => {
         loadTestletter2();
         let observerNodes = document.getElementsByClassName("annotation-target-observer");
         RDFaUtil.setObserverNodes(observerNodes);
-        RDFaUtil.indexRDFa((error, newIndex) => {
+        RDFaUtil.indexRDFa().then((newIndex) => {
             index = newIndex;
             done();
         });
@@ -586,25 +592,4 @@ describe("RDFaUtil parse of test letter 2. ", () => {
     });
 
 });
-
-var loadResources = (callback) => {
-    mockServer.get("/frbroo_alternate.ttl").thenReply(200, frbrooRelationsString).then(() => {
-        AnnotationActions.indexResources((error) => {
-            if (error) {
-                return callback(error);
-            }
-            AnnotationStore.resourceMaps = RDFaUtil.buildResourcesMaps(); // .. rebuild maps
-            let resources = Object.keys(AnnotationStore.resourceIndex);
-            AnnotationActions.indexExternalResources(resources, (error) => {
-                if (error) {
-                    console.log("error indexing external resources");
-                    return callback(error);
-                } else {
-                    console.log("external resources indexed");
-                    return callback(null);
-                }
-            });
-        });
-    });
-}
 

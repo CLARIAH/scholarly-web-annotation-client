@@ -3,7 +3,6 @@
 
 import React from 'react';
 import Collection from './Collection.jsx';
-import AnnotationUtil from './../../util/AnnotationUtil.js';
 import AppCollectionStore from './../../flux/CollectionStore';
 import AppAnnotationStore from './../../flux/AnnotationStore';
 import CollectionActions from '../../flux/CollectionActions.js';

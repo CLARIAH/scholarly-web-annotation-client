@@ -56,8 +56,6 @@ export class ScholarlyWebAnnotator {
         if (localStorage.userDetails) {
             AnnotationActions.loginUser(JSON.parse(localStorage.userDetails));
         } else {
-            //console.log("configureClient - loadResources");
-            //console.log(Date());
             AnnotationActions.loadResources();
         }
     }
@@ -65,13 +63,10 @@ export class ScholarlyWebAnnotator {
     configureObservers() {
         DOMUtil.setObserverNodeClass(this.clientConfig.targetObserver.targetObserverClass);
         this.observerNodes = DOMUtil.getObserverNodes();
-        //console.log("configureObservers - observerNodes:", this.observerNodes);
         RDFaUtil.setObserverNodes(this.observerNodes);
         this.setSelectionListener();
-        //console.log("configureObservers - setAnnotationAttributes");
         this.setAnnotationAttributes();
         if (this.clientConfig.targetObserver.observeMutations) {
-            //console.log("observing mutations");
             this.startObserver();
         }
     }
@@ -79,7 +74,6 @@ export class ScholarlyWebAnnotator {
     setAnnotationAttributes() {
         for (var index = 0; index < this.observerNodes.length; index++) {
             this.setSelectWholeElement(this.observerNodes[index]);
-            //console.log("setAnnotationAttributes - setUnselectable");
             this.setUnselectable(this.observerNodes[index]);
         }
     }
@@ -92,7 +86,6 @@ export class ScholarlyWebAnnotator {
     }
 
     setUnselectable(node) {
-        //console.log("setUnselectable - resetIgnoreNodes");
         RDFaUtil.resetIgnoreNodes();
         let ignoreNodes = RDFaUtil.getRDFaIgnoreNodes(node);
         ignoreNodes.forEach(function(ignoreNode) {
@@ -108,7 +101,6 @@ export class ScholarlyWebAnnotator {
             this.setAnnotationAttributes(this.observerNodes);
             // check if there are new resources
             if (this.resourcesChanged())
-                //console.log("startObserver resourcesChanged - loadResources");
                 AnnotationActions.loadResources(); // trigger reload of annotations
         });
 

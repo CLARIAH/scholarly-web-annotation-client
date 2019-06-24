@@ -195,8 +195,7 @@ describe("FRBRooUtil", () => {
         it("should return empty array if no vocabularies found", (done) => {
             loadPlainPage();
             let vocabularies = [];
-            FRBRooUtil.readVocabularies(vocabularies, (error, vocabData) => {
-                expect(error).to.equal(null);
+            FRBRooUtil.readVocabularies(vocabularies).then((vocabData) => {
                 expect(vocabData.length).to.equal(0);
                 done();
             });
@@ -204,11 +203,10 @@ describe("FRBRooUtil", () => {
 
         it("should find specified vocabulary url", (done) => {
             loadRDFaPage();
-            let vocabularyURLs = [];
-            RDFaUtil.listVocabularyURLs(document, vocabularyURLs);
+            let vocabularyURLs = RDFaUtil.listVocabularyURLs(document);
             let url = "http://localhost:3001/vangoghannotationontology.ttl";
             mockServer.get("/vangoghannotationontology.ttl").thenReply(200, vangoghOntologyString).then(() => {
-                FRBRooUtil.readVocabularies(vocabularyURLs, (error, vocabData) => {
+                FRBRooUtil.readVocabularies(vocabularyURLs).then((vocabData) => {
                     expect(vocabData.length).to.equal(1);
                     expect(vocabData[0].hasOwnProperty("url")).to.equal(true);
                     expect(vocabData[0].url).to.equal(url);
@@ -234,7 +232,8 @@ describe("FRBRooUtil", () => {
         it("should return null if vocabulary URL does not exist", (done) => {
             let url = "http://localhost:3001/doesnotexist";
             mockServer.get("/doesnotexist").thenReply(404, "not found").then(() => {
-                FRBRooUtil.readVocabulary(url, (error, vocabData) => {
+                FRBRooUtil.readVocabulary(url).then((vocabData) => {
+                }, (error) => {
                     expect(error).to.not.equal(null);
                     done();
                 });
@@ -244,8 +243,7 @@ describe("FRBRooUtil", () => {
         it("should return vocabulary data if vocabulary URL exists", (done) => {
             let url = "http://localhost:3001/vangoghannotationontology.ttl";
             mockServer.get("/vangoghannotationontology.ttl").thenReply(200, vangoghOntologyString).then(() => {
-                FRBRooUtil.readVocabulary(url, (error, vocabData) => {
-                    expect(error).to.equal(null);
+                FRBRooUtil.readVocabulary(url).then((vocabData) => {
                     expect(vocabData.data).to.equal(vangoghOntologyString);
                     done();
                 });
@@ -468,7 +466,7 @@ describe("FRBRooUtil", () => {
             let vocabularies = [{url: url, data: editionOntologyString}];
             let vocabularyStore = FRBRooUtil.makeVocabularyStore(vocabularies);
             let numVocabularies = vocabularyStore.vocabularies.length;
-            FRBRooUtil.importAndUpdate(vocabularyStore, (error, updatesDone) => {
+            FRBRooUtil.importAndUpdate(vocabularyStore).then((updatesDone) => {
                 expect(updatesDone).to.equal(true);
                 expect(vocabularyStore.vocabularies.length).to.equal(numVocabularies);
                 done();
@@ -482,13 +480,12 @@ describe("FRBRooUtil", () => {
             let newUrl = "http://localhost:3001/editionannotationontology.ttl";
             let newVocabularies = [{url: newUrl, data: editionOntologyString}];
             let numVocabularies = vocabularyStore.vocabularies.length;
-            mockServer.get("/editionannotationontology.ttl").thenReply(200, editionOntologyString).then(() => {
-                FRBRooUtil.importAndUpdate(vocabularyStore, (error, updatesDone) => {
-                    expect(updatesDone).to.equal(true);
-                    expect(vocabularyStore.vocabularies.length).to.equal(numVocabularies + 1);
-                    expect(vocabularyStore.vocabularies.includes(newUrl)).to.equal(true);
-                    done();
-                });
+            mockServer.get("/editionannotationontology.ttl").thenReply(200, editionOntologyString);
+            FRBRooUtil.importAndUpdate(vocabularyStore).then((updatesDone) => {
+                expect(updatesDone).to.equal(true);
+                expect(vocabularyStore.vocabularies.length).to.equal(numVocabularies + 1);
+                expect(vocabularyStore.vocabularies.includes(newUrl)).to.equal(true);
+                done();
             });
         });
     });
@@ -507,7 +504,7 @@ describe("FRBRooUtil", () => {
 
         it("should return an empty store if no vocabularies are specified in document", (done) => {
             loadPlainPage();
-            FRBRooUtil.loadVocabularies((error, vocabularyStore) => {
+            FRBRooUtil.loadVocabularies().then((vocabularyStore) => {
                 expect(vocabularyStore).to.not.equal(null);
                 expect(vocabularyStore.hasOwnProperty("vocabularies")).to.equal(true);
                 expect(vocabularyStore.vocabularies.length).to.equal(0);
@@ -521,8 +518,7 @@ describe("FRBRooUtil", () => {
             let editionURL = "http://localhost:3001/editionannotationontology.ttl";
             mockServer.get("/vangoghannotationontology.ttl").thenReply(200, vangoghOntologyString).then(() => {});
             mockServer.get("/editionannotationontology.ttl").thenReply(200, editionOntologyString).then(() => {});
-            FRBRooUtil.loadVocabularies((error, vocabularyStore) => {
-                expect(error).to.equal(null);
+            FRBRooUtil.loadVocabularies().then((vocabularyStore) => {
                 expect(vocabularyStore).to.not.equal(undefined);
                 expect(vocabularyStore.hasOwnProperty("vocabularies")).to.equal(true);
                 expect(vocabularyStore.vocabularies.length).to.equal(2);
@@ -541,7 +537,7 @@ describe("FRBRooUtil", () => {
             mockServer.start((3001));
             mockServer.get("/vangoghannotationontology.ttl").thenReply(200, vangoghOntologyString).then(() => {});
             mockServer.get("/editionannotationontology.ttl").thenReply(200, editionOntologyString).then(() => {});
-            FRBRooUtil.loadVocabularies((error, store) => {
+            FRBRooUtil.loadVocabularies().then((store) => {
                 vocabularyStore = store;
                 done();
             });
@@ -606,7 +602,7 @@ describe("FRBRooUtil", () => {
             mockServer.start((3001));
             mockServer.get("/vangoghannotationontology.ttl").thenReply(200, vangoghOntologyString).then(() => {});
             mockServer.get("/editionannotationontology.ttl").thenReply(200, editionOntologyString).then(() => {});
-            FRBRooUtil.loadVocabularies((error, store) => {
+            FRBRooUtil.loadVocabularies().then((store) => {
                 vocabularyStore = store;
                 done();
             });
@@ -640,7 +636,7 @@ describe("FRBRooUtil", () => {
             mockServer.start((3001));
             mockServer.get("/vangoghannotationontology.ttl").thenReply(200, vangoghOntologyString).then(() => {});
             mockServer.get("/editionannotationontology.ttl").thenReply(200, editionOntologyString).then(() => {});
-            FRBRooUtil.loadVocabularies((error, store) => {
+            FRBRooUtil.loadVocabularies().then((store) => {
                 vocabularyStore = store;
                 done();
             });

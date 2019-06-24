@@ -25,7 +25,6 @@ class AnnotationStore {
 
     //TODO change the name of the event 'change' --> save-annotation
     save(annotation) {
-        //console.log(annotation);
         //notify all components that just listen to a single target
         this.trigger(annotation.target.source, "update", annotation);
         //then notify all components that are interested in all annotations
@@ -35,7 +34,6 @@ class AnnotationStore {
     }
 
     delete(annotation) {
-        //console.log(annotation);
         //then notify all components that are interested in all annotations
         this.trigger("load-annotations");
         // then notify all components that are interested in the deleted annotation
@@ -66,8 +64,8 @@ class AnnotationStore {
         this.trigger("reload-annotations");
     }
 
-    loadResources(topResources, resourceMaps) {
-        this.trigger("loaded-resources", topResources, resourceMaps);
+    loadResources(topResources) {
+        this.trigger("loaded-resources", topResources);
     }
 
     loadCollections(collections) {
@@ -128,7 +126,7 @@ AppDispatcher.register( function( action ) {
         AppAnnotationStore.reloadAnnotations();
         break;
     case "loaded-resources":
-        AppAnnotationStore.loadResources(action.topResources, action.resourceMaps);
+        AppAnnotationStore.loadResources(action.topResources);
         break;
     case "load-collections":
         AppAnnotationStore.loadCollections(action.collections, action.callback);

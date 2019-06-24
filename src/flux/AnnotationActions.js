@@ -2,6 +2,9 @@ import AppDispatcher from "./AppDispatcher";
 import AnnotationAPI from "../api/AnnotationAPI";
 import AnnotationStore from "../flux/AnnotationStore.js";
 import RDFaUtil from "../util/RDFaUtil.js";
+import AnnotationUtil from "../util/AnnotationUtil.js";
+import TimeUtil from "../util/TimeUtil.js";
+import TargetUtil from "../util/TargetUtil.js";
 import FRBRooUtil from "../util/FRBRooUtil.js";
 
 var restorePermission = () => {
@@ -13,14 +16,12 @@ var restorePermission = () => {
     } catch (e) {
         // catch errors if no localStorage exists
     }
-    //console.log("restoring permissions:", permission);
     return permission;
 }
 
 let permission = restorePermission();
 
 var storePermission = (permission) => {
-    //console.log("storing permissions:", permission);
     if (!window.localStorage) {
     } else {
         window.localStorage.setItem("swac-permission", JSON.stringify(permission));
@@ -91,11 +92,9 @@ const AnnotationActions = {
     },
 
     setBaseAnnotationOntology(url) {
-        //console.log("AnnotationActions - setBaseAnnotationOntology url:", url);
         FRBRooUtil.baseAnnotationOntologyURL = url;
         RDFaUtil.baseAnnotationOntologyURL = url;
         RDFaUtil.setBaseAnnotationOntology(url);
-        //console.log("AnnotationActions - baseAnnotationOntologyURL:", FRBRooUtil.baseAnnotationOntologyURL);
     },
 
     addListenerElement(element) {
@@ -105,9 +104,6 @@ const AnnotationActions = {
 
     lookupIdentifier(sourceId) {
         var source = { type: null, data: null }; // for IDs to external resources
-        //console.log(AnnotationStore.annotationIndex);
-        //console.log(AnnotationStore.resourceIndex);
-        //console.log(AnnotationStore.externalResourceIndex);
         if (AnnotationStore.annotationIndex.hasOwnProperty(sourceId))
             source = { type: "annotation", data: AnnotationStore.annotationIndex[sourceId] };
         else if (AnnotationStore.resourceIndex.hasOwnProperty(sourceId))
@@ -192,35 +188,28 @@ const AnnotationActions = {
         });
     },
 
+    makeAnnotation: (annotationTargets, username) => {
+        return AnnotationUtil.generateW3CAnnotation(annotationTargets, username);
+    },
+
     loadAnnotations: (resourceIds) => {
-        //console.log("loadAnnotations - resourceIds:", resourceIds);
-        //console.log(Date());
+        AnnotationStore.annotations = []; // reset to remove old annotations
         if (resourceIds === undefined)
             resourceIds = AnnotationStore.topResources;
-        //console.log("loadAnnotations - AnnotationStore.resourceIds:", AnnotationStore.resourceIds);
-        //console.log(Date());
         let externalResources = AnnotationActions.getExternalResources(resourceIds);
-        //console.log("loadAnnotations - externalResources:", externalResources);
-        //console.log(Date());
         let externalIds = externalResources.map((res) => { return res.parentResource }).filter((externalId) => { return typeof externalId === "string"});
 
-        //console.log("loadAnnotations - top externalIds:", externalIds);
-        //console.log(Date());
         resourceIds = resourceIds.concat(externalIds);
-        //console.log("loadAnnotations - top RDFa resourceIds:", resourceIds);
-        //console.log(Date());
         AnnotationAPI.getAnnotationsByTargets(resourceIds, AnnotationActions.accessStatus, (error, annotations) => {
             if (error) {
-                //console.error(resourceIds, error.toString());
-                //window.alert("Error loading annotations: " + error.toString());
+                throw error;
             }
 
             AnnotationStore.annotationIndex = {};
+            AnnotationStore.annotations = annotations;
             annotations.forEach((annotation) => {
                 AnnotationStore.annotationIndex[annotation.id] = annotation;
             });
-            //console.log("AnnotationActions loadAnnotations - dispatchAnnotations");
-            //console.log(Date());
             AnnotationActions.dispatchAnnotations(annotations);
         });
     },
@@ -259,81 +248,25 @@ const AnnotationActions = {
         });
     },
 
-    indexResources: (callback) => {
-        RDFaUtil.indexRDFa((error, index) => {
-            if (error) {
+    indexResources: () => {
+        return new Promise((resolve, reject) => {
+            FRBRooUtil.indexResources().then((resourceData) => {
+                AnnotationStore.resourceIndex = resourceData.resourceIndex.resources;
+                AnnotationStore.relationIndex = resourceData.resourceIndex.relations;
+                AnnotationStore.resourceStore = resourceData.resourceStore;
+                AnnotationStore.representedResourceMap = resourceData.representedResourceMap;
+                AnnotationStore.externalResourceIndex = resourceData.externalResourceIndex;
+                AnnotationStore.resourceData = resourceData;
+                return resolve();
+            }, (error) => {
                 console.log("Error indexing resources");
                 console.log(error);
-                return callback(error);
-            } else {
-                //console.log("indexResources - index:", index);
-                AnnotationStore.resourceIndex = index.resources;
-                //console.log("indexResources - AnnotationStore.resourceIndex:", AnnotationStore.resourceIndex);
-                AnnotationStore.relationIndex = index.relations;
-                return callback(error);
-            }
-        }); // ... refresh index
-    },
-
-    indexExternalResources: (resources, callback) => {
-        //var t0 = performance.now();
-        //console.log("AnnotationActions indexExternalResources - loading vocabularies");
-        //console.log(Date());
-        FRBRooUtil.loadVocabularies((error, store) => {
-            //console.log("AnnotationActions indexExternalResources - loaded vocabularies");
-            //console.log(Date());
-            if (error) {
-                //console.log(error);
-                return callback(error);
-            } else if (store === null) {
-                // no vocabularies, skip reading external resources
-                //console.log("indexExternalResources - returning with undefined vocabularyStore");
-                return callback(null, false, null);
-            }
-            //var t1 = performance.now();
-            AnnotationStore.vocabularyStore = store;
-            AnnotationStore.resourceStore = null;
-            AnnotationStore.representedResourceMap = {};
-            AnnotationStore.externalResourceIndex = {};
-            //console.log("AnnotationActions - vocabularyStore:", store);
-            //console.log(Date());
-            FRBRooUtil.loadExternalResources(AnnotationStore.vocabularyStore, (error, doIndexing, store) => {
-                if (error) {
-                    console.log("Error loading external resources using vocabularyStore");
-                    console.log(error);
-                    return callback(error);
-                } else if (!doIndexing) {
-                    return callback(null);
-                } else {
-                    //var t2 = performance.now();
-                    AnnotationStore.resourceStore = store;
-                    //console.log("AnnotationActions - resourceStore:", store);
-                    //console.log("AnnotationActions - resources:", resources);
-                    //console.log(Date());
-                    let representedResourceMap = FRBRooUtil.mapRepresentedResources(store, resources);
-                    //console.log("AnnotationActions - representedResourceMap:", representedResourceMap);
-                    //console.log(Date());
-                    //var t3 = performance.now();
-                    AnnotationStore.representedResourceMap = representedResourceMap;
-                    let externalResourceIndex = FRBRooUtil.indexExternalResources(store, resources);
-                    //console.log("AnnotationActions - externalResourceIndex:", externalResourceIndex);
-                    //console.log(Date());
-                    AnnotationStore.externalResourceIndex = externalResourceIndex;
-                    //var t4 = performance.now();
-                    //console.log("Call to loadVocabularies took " + (t1 - t0) + " milliseconds.");
-                    //console.log("Call to loadExternalResources took " + (t2 - t1) + " milliseconds.");
-                    //console.log("Call to mapRepresentedResources took " + (t3 - t2) + " milliseconds.");
-                    //console.log("Call to indexExternalResources took " + (t4 - t3) + " milliseconds.");
-                    //console.log(Date());
-                    return callback(null);
-                }
-            });
+                return reject(error);
+            }); // ... refresh index
         });
     },
 
     hasExternalResource(resourceId) {
-        //console.log(resourceId);
-        //console.log(AnnotationStore.externalResourceIndex);
         if (!AnnotationStore.externalResourceIndex) {
             return false;
         } else {
@@ -342,7 +275,6 @@ const AnnotationActions = {
     },
 
     hasRepresentedResource(resourceId) {
-        //console.log("hasRepresentedResource - representedResourceMap:", AnnotationStore.representedResourceMap);
         if (!AnnotationStore.representedResourceMap) {
             return false;
         } else {
@@ -365,9 +297,6 @@ const AnnotationActions = {
             console.log("resourceIds:", resourceIds);
             throw Error("resourceIds should be an array");
         }
-        //console.log("resourceIds:", resourceIds);
-        //resourceIds.filter((resourceId) => { console.log(resourceId); console.log(AnnotationActions.hasExternalResource(resourceId)) ;})
-        //console.log("filtered:", resourceIds.filter(AnnotationActions.hasExternalResource));
         return resourceIds.filter(AnnotationActions.hasExternalResource).map((resourceId) => {
             return AnnotationActions.getExternalResource(resourceId);
         });
@@ -384,47 +313,18 @@ const AnnotationActions = {
     },
 
     loadResources: () => {
-        //console.log("loadResources - getTopRDFaResources");
-        //console.log(Date());
         AnnotationStore.topResources = RDFaUtil.getTopRDFaResources();
-        //console.log("loadResources - topResources:", AnnotationStore.topResources);
-        //console.log(Date());
-        AnnotationActions.indexResources((error) => {
-            if (error) {
-                //console.error(error);
-                //window.alert("Error indexing RDFa resources in this page\n" + error.toString());
-                return error;
-            }
-            //console.log("loadResources - indexResources done");
-            //console.log(Date());
-            //console.log("loadResources - AnnotationStore.resourceIndex:", AnnotationStore.resourceIndex);
-            //console.log(Date());
-            AnnotationStore.resourceMaps = RDFaUtil.buildResourcesMaps(); // .. rebuild maps
-            //console.log("loadResources - resourceMaps:", AnnotationStore.resourceMaps);
-            //console.log(Date());
-            let resources = Object.keys(AnnotationStore.resourceIndex);
-            //console.log("loadResources - resources:", resources);
-            //console.log(Date());
-            AnnotationActions.indexExternalResources(resources, (error) => {
-                if (error) {
-                    console.log("error indexing external resources");
-                    console.log(error);
-                    return error;
-                } else {
-                    //console.log("external resources indexed");
-                    //console.log(Date());
-                    //console.log(AnnotationStore.externalResourceIndex);
-                    //console.log(Date());
-                    AppDispatcher.dispatch({
-                        eventName: "loaded-resources",
-                        topResources: AnnotationStore.topResources,
-                        resourceMaps: AnnotationStore.resourceMaps
-                    });
-                    AnnotationActions.loadAnnotations(AnnotationStore.topResources);
-                    return null;
-                }
+        AnnotationActions.indexResources().then(() => {
+            AppDispatcher.dispatch({
+                eventName: "loaded-resources",
+                topResources: AnnotationStore.topResources,
             });
+            AnnotationActions.loadAnnotations(AnnotationStore.topResources);
         });
+    },
+
+    getCandidates: (annotations, defaultTargets) => {
+        return TargetUtil.getCandidates(annotations, defaultTargets, AnnotationStore.resourceData);
     },
 
     registerUser : function(userDetails) {
@@ -451,8 +351,6 @@ const AnnotationActions = {
                     userDetails: error
                 });
             } else {
-                //console.log("AnnotationActions loginUser - loadResources");
-                //console.log(Date());
                 AnnotationActions.loadResources();
                 AppDispatcher.dispatch({
                     eventName: "login-succeeded",
@@ -572,6 +470,49 @@ const AnnotationActions = {
         }
         return entry;
     },
+
+    mapTargetsToDOMElements: (annotation) => {
+        return TargetUtil.mapTargetsToDOMElements(annotation, AnnotationStore.resourceData, AnnotationStore.annotations);
+    },
+
+    createBreadcrumbTrail : (resourceId) => {
+        if (AnnotationStore.resourceIndex.hasOwnProperty(resourceId)) {
+            return RDFaUtil.createBreadcrumbTrail(resourceId, AnnotationStore.resourceIndex);
+        } else if (AnnotationStore.externalResourceIndex.hasOwnProperty(resourceId)) {
+            return FRBRooUtil.createBreadcrumbTrail(resourceId, AnnotationStore.externalResourceIndex);
+        } else {
+            throw Error("Unknown resource!");
+        }
+    },
+
+    extractBodies : (annotation) => {
+        return AnnotationUtil.extractBodies(annotation);
+    },
+
+    extractTargets : (annotation) => {
+        return AnnotationUtil.extractTargets(annotation);
+    },
+
+    extractTargetIdentifier : (target) => {
+        return AnnotationUtil.extractTargetIdentifier(target);
+    },
+
+    getTargetText : (target, source) => {
+        return TargetUtil.getTargetText(target, source);
+    },
+
+    getTargetMediaFragment : (target) => {
+        return TargetUtil.getTargetMediaFragment(target);
+    },
+
+    toggleHighlight : (targetDOMElements, highlighted) => {
+        return TargetUtil.toggleHighlight(targetDOMElements, highlighted);
+    },
+
+    formatTime : (timestamp) => {
+        return TimeUtil.formatTime(timestamp);
+    }
+
 };
 
 export default AnnotationActions;

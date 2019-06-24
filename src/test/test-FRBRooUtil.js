@@ -235,40 +235,6 @@ describe("FRBRooUtil", () => {
 
     });
 
-    describe("readExternalResources", () => {
-
-        beforeEach((done) => {
-            mockServer.start((3001));
-            mockServer.get("/doesnotexist").thenReply(404, "not found");
-            mockServer.get("/frbroo_alternate.ttl").thenReply(200, frbrooRelationsString);
-            done();
-        });
-
-        afterEach((done) => {
-            mockServer.stop();
-            done();
-        });
-
-        it("should return null when relations file does not exist", (done) => {
-            let url = "http://localhost:3001/doesnotexist";
-            let frbrooRelations = FRBRooUtil.readExternalResources(url, (error, frbrooRelations) => {
-                expect(error).to.not.equal(null);
-                expect(frbrooRelations).to.equal(null);
-                done();
-            });
-        });
-
-        it("should return an RDFLib store when relations file does exist", (done) => {
-            let url = "http://localhost:3001/frbroo_alternate.ttl";
-            let frbrooRelations = FRBRooUtil.readExternalResources(url, (error, frbrooRelations) => {
-                expect(error).to.equal(null);
-                expect(frbrooRelations).to.equal(frbrooRelationsString);
-                done();
-            });
-        });
-
-    });
-
     describe("storeExternalResources", () => {
 
         it("should throw error when no store given", (done) => {
@@ -748,21 +714,13 @@ describe("FRBRooUtil", () => {
         });
     });
 
-    describe("loadExternalResources", () => {
-
-        FRBRooUtil.baseAnnotationOntologyURL = "http://localhost:3001/editionannotationontology.ttl";
-        let vocabularyStore = null;
+    describe("readExternalResources", () => {
 
         beforeEach((done) => {
             mockServer.start((3001));
+            mockServer.get("/doesnotexist").thenReply(404, "not found");
             mockServer.get("/frbroo_alternate.ttl").thenReply(200, frbrooRelationsString);
-            mockServer.get("/vangoghannotationontology.ttl").thenReply(200, vangoghOntologyString);
-            mockServer.get("/editionannotationontology.ttl").thenReply(200, editionOntologyString);
-            loadRDFaPage();
-            FRBRooUtil.loadVocabularies((error, store) => {
-                vocabularyStore = store;
-                done();
-            });
+            done();
         });
 
         afterEach((done) => {
@@ -770,38 +728,42 @@ describe("FRBRooUtil", () => {
             done();
         });
 
-        it("should do nothing if no external resources are specified", (done) => {
-            loadPlainPage();
-            FRBRooUtil.loadExternalResources(vocabularyStore, (error, doIndexing, store) => {
-                expect(error).to.equal(null);
-                expect(doIndexing).to.equal(false);
-                expect(store).to.equal(null);
+        it("should return null when relations file does not exist", (done) => {
+            let url = "http://localhost:3001/doesnotexist";
+            FRBRooUtil.readExternalResources(url).then((frbrooRelations) => {
+            }, (error) => {
+                expect(error).to.not.equal(null);
                 done();
             });
+            /*
+            FRBRooUtil.readExternalResources(url, (error, frbrooRelations) => {
+                expect(error).to.not.equal(null);
+                expect(frbrooRelations).to.equal(null);
+                done();
+            });
+            */
         });
 
-        it("should store relations if external resources are specified", (done) => {
-            loadRDFaPage();
-            FRBRooUtil.loadExternalResources(vocabularyStore, (error, doIndexing, store) => {
-                expect(doIndexing).to.equal(true);
-                expect(store).to.not.equal(null);
-                expect(store.relations).to.exist;
+        it("should return an RDFLib store when relations file does exist", (done) => {
+            let url = "http://localhost:3001/frbroo_alternate.ttl";
+            FRBRooUtil.readExternalResources(url).then((frbrooRelations) => {
+                expect(frbrooRelations).to.equal(frbrooRelationsString);
+                done();
+            }, (error) => {
+            });
+            /*
+            let frbrooRelations = FRBRooUtil.readExternalResources(url, (error, frbrooRelations) => {
+                expect(error).to.equal(null);
+                expect(frbrooRelations).to.equal(frbrooRelationsString);
                 done();
             });
+            */
         });
 
-        it("should store triples if external resources are specified", (done) => {
-            loadRDFaPage();
-            FRBRooUtil.loadExternalResources(vocabularyStore, (error, doIndexing, store) => {
-                expect(error).to.equal(null);
-                expect(doIndexing).to.equal(true);
-                expect(store).to.not.equal(null);
-                expect(store.triples).to.exist;
-                done();
-            });
-        });
     });
 
+
+    /*
     describe("checkExternalResources", () => {
 
         let store = FRBRooUtil.newStore();
@@ -819,19 +781,72 @@ describe("FRBRooUtil", () => {
 
         it("should do nothing if no external resources are specified", (done) => {
             loadPlainPage();
-            FRBRooUtil.checkExternalResources((error, doIndexing, store) => {
-                expect(error).to.equal(null);
-                expect(doIndexing).to.deep.equal(false);
+            FRBRooUtil.checkExternalResources().then((data) => {
+                expect(data.doIndexing).to.deep.equal(false);
+                expect(data.store).to.equal(null);
                 done();
             });
         });
 
         it("should store relations if external resources are specified", (done) => {
             loadRDFaPage();
-            FRBRooUtil.checkExternalResources((error, doIndexing, store) => {
-                expect(error).to.equal(null);
-                expect(doIndexing).to.deep.equal(true);
-                expect(store).to.not.equal(null);
+            FRBRooUtil.checkExternalResources().then((data) => {
+                expect(data.doIndexing).to.deep.equal(true);
+                expect(data.store).to.not.equal(undefined);
+                expect(data.store).to.not.equal(null);
+                done();
+            });
+        });
+    });
+    */
+
+    describe("loadExternalResources", () => {
+
+        FRBRooUtil.baseAnnotationOntologyURL = "http://localhost:3001/editionannotationontology.ttl";
+        let vocabularyStore = null;
+
+        beforeEach((done) => {
+            mockServer.start((3001));
+            mockServer.get("/frbroo_alternate.ttl").thenReply(200, frbrooRelationsString);
+            mockServer.get("/vangoghannotationontology.ttl").thenReply(200, vangoghOntologyString);
+            mockServer.get("/editionannotationontology.ttl").thenReply(200, editionOntologyString);
+            loadRDFaPage();
+            FRBRooUtil.loadVocabularies().then((store) => {
+                vocabularyStore = store;
+                done();
+            });
+        });
+
+        afterEach((done) => {
+            mockServer.stop();
+            done();
+        });
+
+        it("should do nothing if no external resources are specified", (done) => {
+            loadPlainPage();
+            FRBRooUtil.loadExternalResources(vocabularyStore).then((externalStore) => {
+                expect(externalStore.doIndexing).to.equal(false);
+                expect(externalStore.triples).to.equal(null);
+                done();
+            });
+        });
+
+        it("should store relations if external resources are specified", (done) => {
+            loadRDFaPage();
+            FRBRooUtil.loadExternalResources(vocabularyStore).then((externalStore) => {
+                expect(externalStore.doIndexing).to.equal(true);
+                expect(externalStore.triples).to.not.equal(null);
+                expect(externalStore.relations).to.exist;
+                done();
+            });
+        });
+
+        it("should store triples if external resources are specified", (done) => {
+            loadRDFaPage();
+            FRBRooUtil.loadExternalResources(vocabularyStore).then((externalStore) => {
+                expect(externalStore.doIndexing).to.equal(true);
+                expect(externalStore.triples).to.not.equal(null);
+                expect(externalStore.relations).to.exist;
                 done();
             });
         });

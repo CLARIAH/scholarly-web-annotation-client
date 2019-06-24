@@ -211,18 +211,52 @@ describe("FRBRooUtil", () => {
         mockServer.get("/vangoghannotationontology.ttl").thenReply(200, vangoghOntologyString);
         mockServer.get("/editionannotationontology.ttl").thenReply(200, editionOntologyString);
         loadRDFaPage();
-        FRBRooUtil.loadVocabularies((error, store) => {
-            vocabularyStore = store;
-            FRBRooUtil.loadExternalResources(vocabularyStore, (error, doIndexing, store) => {
-                resourceStore = store;
+        RDFaUtil.setBaseAnnotationOntology(baseAnnotationOntologyURL);
+        FRBRooUtil.loadVocabularies()
+            .then(FRBRooUtil.loadExternalResources).then((externalStore) => {
+                resourceStore = externalStore;
                 done();
             });
-        });
     });
 
     afterEach((done) => {
         mockServer.stop();
         done();
+    });
+
+    describe("indexResources", () => {
+
+        it("should return an object with resourceIndex", (done) => {
+            FRBRooUtil.indexResources().then((resourceData) => {
+                expect(resourceData).to.not.equal(null);
+                expect(resourceData.hasOwnProperty("resourceIndex")).to.equal(true);
+                done();
+            });
+        });
+
+        it("should return an object with resourceStore", (done) => {
+            FRBRooUtil.indexResources().then((resourceData) => {
+                expect(resourceData).to.not.equal(null);
+                expect(resourceData.hasOwnProperty("resourceStore")).to.equal(true);
+                done();
+            });
+        });
+
+        it("should return an object with externalResourceIndex", (done) => {
+            FRBRooUtil.indexResources().then((resourceData) => {
+                expect(resourceData).to.not.equal(null);
+                expect(resourceData.hasOwnProperty("externalResourceIndex")).to.equal(true);
+                done();
+            });
+        });
+
+        it("should return an object with representedResourceMap", (done) => {
+            FRBRooUtil.indexResources().then((resourceData) => {
+                expect(resourceData).to.not.equal(null);
+                expect(resourceData.hasOwnProperty("representedResourceMap")).to.equal(true);
+                done();
+            });
+        });
     });
 
     describe("isKnownResource", () => {
@@ -389,7 +423,7 @@ describe("FRBRooUtil", () => {
 
         before((done) => {
             RDFaUtil.setBaseAnnotationOntology(baseAnnotationOntologyURL);
-            RDFaUtil.indexRDFa((error, index) => {
+            RDFaUtil.indexRDFa().then((index) => {
                 rdfaResources = Object.keys(index.resources);
                 representations = FRBRooUtil.mapRepresentedResources(resourceStore, rdfaResources);
                 externalResources = Object.keys(representations).map((resource) => {
@@ -533,43 +567,44 @@ describe("FRBRooUtil", () => {
         let abstractLetter = "urn:vangogh/letter=001";
         let abstractParagraph = "urn:vangogh/letter=001:para=1";
         let resources = [abstractLetter, abstractParagraph];
+        let externalResourceIndex = null;
+
+        before((done) => {
+            externalResourceIndex = FRBRooUtil.indexExternalResources(resourceStore, resources);
+            done();
+        });
 
         it("should throw an error if resource does not exist", (done) => {
+            //let externalResourceIndex = FRBRooUtil.indexExternalResources(resourceStore, resources);
             let resource = "urn:unknown";
             let error = null;
-            AnnotationActions.indexExternalResources(resources, (error) => {
-                try {
-                    FRBRooUtil.createBreadcrumbTrail(AnnotationStore.externalResourceIndex, resource);
-                } catch (err) {
-                    error = err;
-                }
-                expect(error).to.not.equal(null);
-                expect(error.message).to.equal("Invalid resource");
-                done();
-            });
+            try {
+                FRBRooUtil.createBreadcrumbTrail(resource, externalResourceIndex);
+            } catch (err) {
+                error = err;
+            }
+            expect(error).to.not.equal(null);
+            expect(error.message).to.equal("Invalid resource");
+            done();
         });
 
         it("should not throw an error if resource does exist", (done) => {
             let resource = "urn:unknown";
             let error = null;
-            AnnotationActions.indexExternalResources(resources, (error) => {
-                try {
-                    FRBRooUtil.createBreadcrumbTrail(AnnotationStore.externalResourceIndex, abstractParagraph);
-                } catch (err) {
-                    error = err;
-                }
-                expect(error).to.equal(null);
-                done();
-            });
+            try {
+                FRBRooUtil.createBreadcrumbTrail(abstractParagraph, externalResourceIndex);
+            } catch (err) {
+                error = err;
+            }
+            expect(error).to.equal(null);
+            done();
         });
 
         it("should return an array if resource exists", (done) => {
-            AnnotationActions.indexExternalResources(resources, (error) => {
-                let breadcrumbTrail = FRBRooUtil.createBreadcrumbTrail(AnnotationStore.externalResourceIndex, abstractParagraph);
-                expect(breadcrumbTrail).to.not.equal(null);
-                expect(Array.isArray(breadcrumbTrail)).to.equal(true);
-                done();
-            });
+            let breadcrumbTrail = FRBRooUtil.createBreadcrumbTrail(abstractParagraph, externalResourceIndex);
+            expect(breadcrumbTrail).to.not.equal(null);
+            expect(Array.isArray(breadcrumbTrail)).to.equal(true);
+            done();
         });
     });
 });

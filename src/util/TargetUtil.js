@@ -21,8 +21,6 @@ import RDFaUtil from "./RDFaUtil.js";
 import FRBRooUtil from "./FRBRooUtil.js";
 import SelectionUtil from "./SelectionUtil.js";
 import AnnotationUtil from "./AnnotationUtil.js";
-import AnnotationActions from "../flux/AnnotationActions.js";
-import AnnotationStore from "../flux/AnnotationStore.js";
 
 const TargetUtil = {
 
@@ -61,18 +59,14 @@ const TargetUtil = {
         let precedingNodes = descendants.slice(0, descendants.indexOf(targetNode));
         let textNodes = DOMUtil.filterTextNodes(precedingNodes);
         var targetOffset = 0;
-        //console.log("findNodeOffsetInContainer - targetOffset:", targetOffset);
         textNodes.forEach(function(node) {
-            //console.log("findNodeOffsetInContainer - node:", node);
             let displayText = DOMUtil.getTextNodeDisplayText(node);
-            //console.log("finddisplayTextOffsetInContainer - displayText: #" + displayText + "#");
             targetOffset += displayText.length;
-            //console.log("findtargetOffsetOffsetInContainer - targetOffset:", targetOffset);
         });
         return targetOffset;
     },
 
-    findHighlighted : function(container, selection) {
+    findHighlighted : function(container, selection, resourceIndex) {
         var params = null;
         if (selection.mimeType.startsWith("text")) {
             if (selection.selectionText.length > 0) {
@@ -89,7 +83,7 @@ const TargetUtil = {
         } else {
             //console.error("Selection has unknown mimetype:", selection);
         }
-        params.breadcrumbs = RDFaUtil.createBreadcrumbTrail(container.source);
+        params.breadcrumbs = RDFaUtil.createBreadcrumbTrail(container.source, resourceIndex);
         return {
             node: container.node,
             mimeType: selection.mimeType,
@@ -101,12 +95,10 @@ const TargetUtil = {
     },
 
     makeTextSelectors : function(container, selection) {
-        //console.log("makeTextSelectors - container:", container);
         var startNodeOffset = TargetUtil.findNodeOffsetInContainer(container.node, selection.startNode);
         var endNodeOffset = TargetUtil.findNodeOffsetInContainer(container.node, selection.endNode);
         selection.startContainerOffset = startNodeOffset + selection.startOffset;
         selection.endContainerOffset = endNodeOffset + selection.endOffset;
-        //console.log("makeTextSelectors - selection:", selection);
         return {
             position: this.makeTextPositionParams(container, selection),
             quote: this.makeTextQuoteParams(container, selection)
@@ -122,8 +114,6 @@ const TargetUtil = {
 
     makeTextQuoteParams : function(container, selection) {
         let textContent = RDFaUtil.getRDFaTextContent(container.node);
-        //console.log("makeTextQuoteParams - textContent: #" + textContent + "#");
-        //console.log(selection);
         let maxPrefix = selection.startContainerOffset >= 20 ? 20 : selection.startContainerOffset;
         let selectionLength = selection.endContainerOffset - selection.startContainerOffset;
         return {
@@ -135,15 +125,15 @@ const TargetUtil = {
 
     // given a list of nodes, select all RDFa enriched nodes
     // and return as candidate annotation targets
-    getRDFaCandidates : function(nodes) {
-        return RDFaUtil.selectRDFaNodes(nodes).map(function(node) {
+    getRDFaCandidates : (nodes, resourceIndex) => {
+        return RDFaUtil.selectRDFaNodes(nodes).map((node) => {
             let resourceId = RDFaUtil.getRDFaResource(node);
             return {
                 node: node,
                 type: "resource",
                 mimeType: "text", // TODO - fix based on actual content
                 params: {
-                    breadcrumbs: RDFaUtil.createBreadcrumbTrail(resourceId),
+                    breadcrumbs: RDFaUtil.createBreadcrumbTrail(resourceId, resourceIndex),
                     text: RDFaUtil.getRDFaTextContent(node),
                 },
                 label: node.getAttribute("typeof"),
@@ -153,46 +143,40 @@ const TargetUtil = {
     },
 
     // Return all potential annotation targets.
-    getCandidates : function(annotations, defaultTargets) {
-        let candidateResources = TargetUtil.getCandidateRDFaTargets(defaultTargets);
-        let candidateExternalResources = TargetUtil.getCandidateExternalResources(candidateResources);
+    getCandidates : (annotations, defaultTargets, resourceData) => {
+        let candidateResources = TargetUtil.getCandidateRDFaTargets(defaultTargets, resourceData.resourceIndex);
+        let candidateExternalResources = TargetUtil.getCandidateExternalResources(candidateResources, resourceData);
         let candidateAnnotations = TargetUtil.selectCandidateAnnotations(annotations, candidateResources.highlighted);
         return {resource: candidateResources, annotation: candidateAnnotations, external: candidateExternalResources};
     },
 
     // Given a set of potential target resources, return a list of all associated external resources
-    getCandidateExternalResources(resources) {
+    getCandidateExternalResources(resources, resourceData) {
         let externalResources = {highlighted: null, wholeNodes: []};
-        //console.log("getCandidateExternalResources - highlighted:", resources.highlighted);
-        if (resources.highlighted && AnnotationActions.hasRepresentedResource(resources.highlighted.source)) {
-            let highlighted = TargetUtil.getCandidateExternalResource(resources.highlighted);
-            //console.log("getCandidateExternalResources - externalResources.highlighted:", highlighted);
+        if (resources.highlighted && TargetUtil.hasRepresentedResource(resources.highlighted.source, resourceData)) {
+            let highlighted = TargetUtil.getCandidateExternalResource(resources.highlighted, resourceData);
             externalResources.highlighted = highlighted;
-            //console.log(resources.highlighted);
         }
-        //console.log(resources.wholeNodes);
         let resourceIds = resources.wholeNodes.map((resource) => { return resource.source });
-        let wholeNodes = resources.wholeNodes.filter((resource) => { return AnnotationActions.hasRepresentedResource(resource.source); });
-        //let hasExternalResources = resourceIds.filter(AnnotationActions.hasExternalResource);
-        //console.log("resourceIds:", resourceIds);
-        //console.log("hasExternalResources:", hasExternalResources);
-        //externalResources.wholeNodes = hasExternalResources.map((resourceId) => {
-        //    return TargetUtil.getCandidateExternalResource(resourceId);
-        //});
+        let wholeNodes = resources.wholeNodes.filter((resource) => { return TargetUtil.hasRepresentedResource(resource.source, resourceData); });
         externalResources.wholeNodes = wholeNodes.map((wholeNode) => {
-            return TargetUtil.getCandidateExternalResource(wholeNode);
+            return TargetUtil.getCandidateExternalResource(wholeNode, resourceData);
         });
         return externalResources;
     },
 
-    getCandidateExternalResource(resource) {
-        //console.log("getCandidateRDFaTarget - resource:", resource);
-        //console.log("getCandidateRDFaTarget - representedResourceMap:", AnnotationStore.representedResourceMap);
-        if (AnnotationActions.hasRepresentedResource(resource.source)) {
-            let representationResource = AnnotationStore.representedResourceMap[resource.source];
-            //console.log("getCandidateRDFaTarget - representationResource:", representationResource);
-            let externalMap = AnnotationStore.externalResourceIndex[representationResource.parentResource];
-            //console.log("getCandidateRDFaTarget - externalMap:", externalMap);
+    hasRepresentedResource(resourceId, resourceData) {
+        if (!resourceData.representedResourceMap) {
+            return false;
+        } else {
+            return resourceData.representedResourceMap.hasOwnProperty(resourceId);
+        }
+    },
+
+    getCandidateExternalResource(resource, resourceData) {
+        if (TargetUtil.hasRepresentedResource(resource.source, resourceData)) {
+            let representationResource = resourceData.representedResourceMap[resource.source];
+            let externalMap = resourceData.externalResourceIndex[representationResource.parentResource];
             let externalResource = {
                 resource: externalMap.resource,
                 parentResource: externalMap.parentResource,
@@ -211,13 +195,12 @@ const TargetUtil = {
                 externalResource.params.text = resource.params.text;
             }
             externalResource.params.position = resource.params.position;
-            externalResource.params.breadcrumbs = FRBRooUtil.createBreadcrumbTrail(AnnotationStore.externalResourceIndex, externalResource.resource)
+            externalResource.params.breadcrumbs = FRBRooUtil.createBreadcrumbTrail(externalResource.resource, resourceData.externalResourceIndex)
             externalResource.mimeType = resource.mimeType;
             externalResource.label = externalResource.rdfType.map((rdfType) => {
                 return rdfType.substr(rdfType.indexOf("#") + 1);
             })
             externalResource.source = externalResource.resource;
-            //console.log(externalResource);
             return externalResource;
         } else {
             return null;
@@ -226,20 +209,18 @@ const TargetUtil = {
 
     // Annotation targets are elements containing
     // or contained in the selected passage.
-    getCandidateRDFaTargets : function(defaultTargets) {
+    getCandidateRDFaTargets : (defaultTargets, resourceIndex) => {
         var selection = SelectionUtil.getCurrentSelection();
-        //console.log("getCandidateRDFaTargets - selection:", selection);
         var ancestors = DOMUtil.findCommonAncestors(selection.startNode, selection.endNode);
         selection.containerNode = ancestors[ancestors.length - 1];
-        //console.log("getCandidateRDFaTargets - containerNode:", selection.containerNode);
-        var biggerNodes = TargetUtil.getRDFaCandidates(ancestors);
+        var biggerNodes = TargetUtil.getRDFaCandidates(ancestors, resourceIndex);
         let selectionNodes = TargetUtil.findSelectionRDFaNodes(selection);
-        let smallerNodes = TargetUtil.getRDFaCandidates(selectionNodes);
+        let smallerNodes = TargetUtil.getRDFaCandidates(selectionNodes, resourceIndex);
         var wholeNodes = biggerNodes.concat(smallerNodes);
         var highlighted = null;
         if (selection.startOffset !== undefined || selection.rect !== undefined || selection.interval !== undefined) {
             let container = biggerNodes[biggerNodes.length - 1];
-            highlighted = TargetUtil.findHighlighted(container, selection);
+            highlighted = TargetUtil.findHighlighted(container, selection, resourceIndex);
         }
         else if (defaultTargets !== undefined && Array.isArray(defaultTargets)){
             wholeNodes = wholeNodes.filter((resource) => {
@@ -249,8 +230,7 @@ const TargetUtil = {
         return {wholeNodes: wholeNodes, highlighted: highlighted};
     },
 
-    selectCandidateAnnotations : function(annotations, highlighted) {
-        //console.log("selectCandidateAnnotations - annotations:", annotations);
+    selectCandidateAnnotations : (annotations, highlighted) => {
         if (!highlighted)
             return TargetUtil.addCandidateAnnotations(annotations);
         let candidates = annotations.filter(function(annotation) {
@@ -365,25 +345,40 @@ const TargetUtil = {
         "application": "Data"
     },
 
-    mapMimeType : function(mimeType) {
+    mapMimeType : (mimeType) => {
         return TargetUtil.mimeTypeMap[mimeType];
     },
 
-    mapTargetsToDOMElements : function(annotation) {
+    lookupIdentifier : (targetId, resourceData, annotations) => {
+        if (resourceData.resourceIndex.resources.hasOwnProperty(targetId)) {
+            return {type: "resource", data: resourceData.resourceIndex.resources[targetId]};
+        } else if (resourceData.externalResourceIndex && resourceData.externalResourceIndex.hasOwnProperty(targetId)) {
+            return {type: "external", data: resourceData.externalResourceIndex[targetId]};
+        } else {
+            let source = {type: "unknown", data: null};
+            annotations.forEach((annotation) => {
+                if (annotation.id == targetId) {
+                    source.type = "annotation";
+                    source.data = annotation;
+                }
+            });
+            return source;
+        }
+    },
+
+    mapTargetsToDOMElements : (annotation, resourceData, annotations) => {
         var domTargets = [];
         AnnotationUtil.extractTargets(annotation).forEach((target) => {
             var targetId = AnnotationUtil.extractTargetIdentifier(target);
             if (!targetId) // target is not loaded in browser window
                 return [];
-            var source = AnnotationActions.lookupIdentifier(targetId);
+            var source = TargetUtil.lookupIdentifier(targetId, resourceData, annotations);
 
             if (source.type === undefined) {
                 //console.error("source information for target " + targetId + " should have a type:", source);
             } else if (source.type === "annotation"){
-                //AnnotationUtil.extractTargets(source.data).forEach((target) => {
                 AnnotationUtil.extractTargets(source.data).forEach(() => {
-                    domTargets = domTargets.concat(TargetUtil.mapTargetsToDOMElements(source.data));
-                    domTargets = domTargets.concat(TargetUtil.mapTargetsToDOMElements(source.data));
+                    domTargets = domTargets.concat(TargetUtil.mapTargetsToDOMElements(source.data, resourceData, annotations));
                 });
             } else if (source.type === "resource") {
                 if (target.type === undefined) {
@@ -458,7 +453,6 @@ const TargetUtil = {
             selector = TargetUtil.getQuoteSelector(selector);
             return selector.exact;
         }
-        //console.log("getTargetText - selector:", selector)
         selector = Array.isArray(selector) ? selector[0] : selector;
         if (!selector.type)
             return null;
@@ -467,7 +461,6 @@ const TargetUtil = {
         if (selector.type === "TextPositionSelector")
             return TargetUtil.getTargetRangeText(resource.data.domNode, selector.start, selector.end);
         if (selector.type === "NestedPIDSelector") {
-            //console.log("getTargetText - NestedPIDSelector");
         }
         if (resource.data.text)
             return resource.data.text;

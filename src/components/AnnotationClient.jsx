@@ -13,7 +13,6 @@ import React from 'react';
 import AnnotationViewer from './annotation/AnnotationViewer.jsx';
 import CollectionViewer from './collection/CollectionViewer.jsx';
 import ResourceViewer from './resource/ResourceViewer.jsx';
-import AnnotationUtil from './../util/AnnotationUtil.js';
 import AppAnnotationStore from './../flux/AnnotationStore';
 import AnnotationActions from '../flux/AnnotationActions.js';
 import LoginBox from './LoginBox';

@@ -71,7 +71,6 @@ const AnnotationAPI = {
             if (status === 204) {
                 return {};
             }
-            //console.log("Headers:", response.headers);
             return response.json();
         }).then((data) => {
             if (status === 403 && AnnotationAPI.userDetails && AnnotationAPI.userDetails.token) {
@@ -88,7 +87,6 @@ const AnnotationAPI = {
             }
             return callback(null, data);
         }).catch((error) => {
-            //console.error(url, error.toString());
             return callback(error, null);
         });
     },
@@ -161,8 +159,6 @@ const AnnotationAPI = {
             method: "GET"
         };
         AnnotationAPI.makeRequest(url, options, (error, data) => {
-            //console.log("AnnotationAPI - getAnnotationsByTarget makeRequest callback");
-            //console.log(Date());
             return callback(error, data);
         });
     },
@@ -331,13 +327,10 @@ const AnnotationAPI = {
             body: JSON.stringify(userDetails)
         };
         AnnotationAPI.makeRequest(url, options, (error, authorizationData) => {
-            console.log("AnnotationAPI loginUser - error", error);
-            console.log("AnnotationAPI loginUser - authorizationData", authorizationData);
             if (!error) {
                 userDetails.user_id = authorizationData.user.username;
                 userDetails.token = authorizationData.user.token;
                 AnnotationAPI.setUserDetails(userDetails);
-                //console.log(userDetails);
             }
             return callback(error, authorizationData);
         });

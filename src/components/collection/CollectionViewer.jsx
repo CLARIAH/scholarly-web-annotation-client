@@ -11,7 +11,6 @@
 import CollectionCreator from './CollectionCreator.jsx';
 import CollectionList from './CollectionList.jsx';
 import React from 'react';
-import AnnotationUtil from './../../util/AnnotationUtil.js';
 import AppAnnotationStore from './../../flux/AnnotationStore';
 import AnnotationActions from '../../flux/AnnotationActions.js';
 

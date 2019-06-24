@@ -45,23 +45,8 @@ var loadRDFaPage = () => {
 }
 
 var loadResources = (callback) => {
-    AnnotationActions.indexResources((error) => {
-        if (error) {
-            return callback(error);
-        }
-        AnnotationStore.resourceMaps = RDFaUtil.buildResourcesMaps(); // .. rebuild maps
-        let resources = Object.keys(AnnotationStore.resourceIndex);
-        //console.log("loadResources - resources:", resources);
-        AnnotationActions.indexExternalResources(resources, (error) => {
-            if (error) {
-                console.log("error indexing external resources");
-                console.log(error);
-                return callback(error);
-            } else {
-                //console.log("external resources indexed");
-                return callback(null);
-            }
-        });
+    FRBRooUtil.indexResources().then((resourceData) => {
+        return callback(resourceData);
     });
 }
 
@@ -71,9 +56,10 @@ describe("TargetUtil", () => {
 
     let htmlSource = fs.readFileSync("public/testletter.html", "utf-8");
     let baseAnnotationOntologyURL = "http://localhost:3001/editionannotationontology.ttl";
+    let resourceData = null;
 
     before(() => {
-            AnnotationActions.setBaseAnnotationOntology(baseAnnotationOntologyURL);
+        AnnotationActions.setBaseAnnotationOntology(baseAnnotationOntologyURL);
     });
 
     beforeEach((done) => {
@@ -84,8 +70,8 @@ describe("TargetUtil", () => {
         DOMUtil.setObserverNodeClass("annotation-target-observer");
         let observerNodes = DOMUtil.getObserverNodes();
         RDFaUtil.setObserverNodes(observerNodes);
-        AnnotationActions.indexResources((error) => {
-            AnnotationStore.annotationIndex = {};
+        FRBRooUtil.indexResources().then((data) => {
+            resourceData = data;
             done();
         });
     });
@@ -97,7 +83,7 @@ describe("TargetUtil", () => {
             let rect = {x: 1, y: 1, h:100, w: 100};
             SelectionUtil.setImageSelection(element, rect);
             let defaultTargets = [];
-            let candidates = TargetUtil.getCandidateRDFaTargets(defaultTargets);
+            let candidates = TargetUtil.getCandidateRDFaTargets(defaultTargets, resourceData.resourceIndex);
             expect(typeof candidates).to.equal("object");
             let candidate = candidates.highlighted;
             expect(candidate.mimeType).to.equal("image");
@@ -147,45 +133,45 @@ describe("TargetUtil", () => {
         });
 
         it("should return an object", (done) => {
-            loadResources((error) => {
-                let candidateResources = TargetUtil.getCandidateRDFaTargets(defaultTargets);
-                let candidateExternalResources = TargetUtil.getCandidateExternalResources(candidateResources);
+            loadResources((resourceData) => {
+                let candidateResources = TargetUtil.getCandidateRDFaTargets(defaultTargets, resourceData.resourceIndex);
+                let candidateExternalResources = TargetUtil.getCandidateExternalResources(candidateResources, resourceData);
                 expect(candidateExternalResources).to.not.equal(null);
                 done();
             });
         });
 
         it("should return an object with a highlighed property", (done) => {
-            loadResources((error) => {
-                let candidateResources = TargetUtil.getCandidateRDFaTargets(defaultTargets);
-                let candidateExternalResources = TargetUtil.getCandidateExternalResources(candidateResources);
+            loadResources((resourceData) => {
+                let candidateResources = TargetUtil.getCandidateRDFaTargets(defaultTargets, resourceData.resourceIndex);
+                let candidateExternalResources = TargetUtil.getCandidateExternalResources(candidateResources, resourceData);
                 expect(candidateExternalResources.hasOwnProperty("highlighted")).to.equal(true);
                 done();
             });
         });
 
         it("should return an object with a highlighed property", (done) => {
-            loadResources((error) => {
-                let candidateResources = TargetUtil.getCandidateRDFaTargets(defaultTargets);
-                let candidateExternalResources = TargetUtil.getCandidateExternalResources(candidateResources);
+            loadResources((resourceData) => {
+                let candidateResources = TargetUtil.getCandidateRDFaTargets(defaultTargets, resourceData.resourceIndex);
+                let candidateExternalResources = TargetUtil.getCandidateExternalResources(candidateResources, resourceData);
                 expect(candidateExternalResources.hasOwnProperty("wholeNodes")).to.equal(true);
                 done();
             });
         });
 
         it("should return wholeNodes if candidateResources wholeNodes have external resources", (done) => {
-            loadResources((error) => {
-                let candidateResources = TargetUtil.getCandidateRDFaTargets(defaultTargets);
-                let candidateExternalResources = TargetUtil.getCandidateExternalResources(candidateResources);
+            loadResources((resourceData) => {
+                let candidateResources = TargetUtil.getCandidateRDFaTargets(defaultTargets, resourceData.resourceIndex);
+                let candidateExternalResources = TargetUtil.getCandidateExternalResources(candidateResources, resourceData);
                 expect(candidateExternalResources.wholeNodes.length).to.not.equal(0);
                 done();
             });
         });
 
         it("should get abstract resource if original representation is candidate", (done) => {
-            loadResources((error) => {
-                let candidateResources = TargetUtil.getCandidateRDFaTargets(defaultTargets);
-                let candidateExternalResources = TargetUtil.getCandidateExternalResources(candidateResources);
+            loadResources((resourceData) => {
+                let candidateResources = TargetUtil.getCandidateRDFaTargets(defaultTargets, resourceData.resourceIndex);
+                let candidateExternalResources = TargetUtil.getCandidateExternalResources(candidateResources, resourceData);
                 let externalRelation = candidateExternalResources.wholeNodes[0];
                 expect(externalRelation.resource).to.equal(abstractResource);
                 done();
@@ -193,6 +179,5 @@ describe("TargetUtil", () => {
         });
     });
 });
-
 
 

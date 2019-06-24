@@ -10,7 +10,6 @@
 
 import ResourceList from './ResourceList.jsx';
 import React from 'react';
-import AnnotationUtil from './../../util/AnnotationUtil.js';
 import AppAnnotationStore from './../../flux/AnnotationStore';
 import AnnotationActions from '../../flux/AnnotationActions.js';
 

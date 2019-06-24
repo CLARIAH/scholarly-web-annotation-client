@@ -3,8 +3,6 @@
 import React from 'react';
 import TargetCreator from './TargetCreator';
 import BodyCreator from './BodyCreator';
-import TargetUtil from './../../util/TargetUtil.js';
-import AnnotationUtil from './../../util/AnnotationUtil.js';
 import FlexModal from '../FlexModal';
 import AnnotationActions from '../../flux/AnnotationActions';
 import $ from 'jquery';
@@ -40,8 +38,7 @@ class AnnotationCreator extends React.Component {
     }
 
     selectTargets() {
-        let candidates = TargetUtil.getCandidates(this.state.annotations, this.props.config.defaults.target);
-        //console.log("selectTarget - candidates:", candidates);
+        let candidates = AnnotationActions.getCandidates(this.state.annotations, this.props.config.defaults.target);
         this.setState({
             editAnnotation: null,
             candidates: candidates,
@@ -80,7 +77,7 @@ class AnnotationCreator extends React.Component {
         this.setState({createdBodies: createdBodies});
     }
     createAnnotation(annotationTargets) {
-        var annotation = AnnotationUtil.generateW3CAnnotation(annotationTargets, this.props.currentUser.username);
+        var annotation = AnnotationActions.makeAnnotation(annotationTargets, this.props.currentUser.username);
         annotation.body = this.listBodies(this.state.createdBodies);
         this.editAnnotationBody(annotation);
     }
@@ -89,7 +86,7 @@ class AnnotationCreator extends React.Component {
         if (this.state.editAnnotation) {
             var annotation = this.state.editAnnotation;
         } else {
-            var annotation = AnnotationUtil.generateW3CAnnotation(this.state.selectedTargets, this.props.currentUser.username);
+            var annotation = AnnotationActions.makeAnnotation(this.state.selectedTargets, this.props.currentUser.username);
         }
         var bodies = this.listBodies(this.state.createdBodies);
         if (bodies.length === 0) {
