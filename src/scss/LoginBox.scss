@@ -3,20 +3,30 @@
 	.swac__lb__panel {
 
 		display:flex;
+		flex-direction: column;
 		padding:10px;
 
 		.swac__lb__mode-select {
-
+			display:flex;
+			align-items: flex-start;
+			margin-bottom:5px;
+			label {
+				margin-right: 5px;
+			}
 		}
 
 		.swac__lb__form {
-			input {
-				&.valid {
-					color:green;
+			margin-bottom:5px;
+			.swac__lb__form-row {
+				display:flex;
+				justify-content: flex-start;
+				label {
+					width:120px;
+					font-weight: bold;
+					flex-grow:1;
 				}
-
-				&.invalid {
-					color:red;
+				input {
+					flex-grow:3;
 				}
 			}
 

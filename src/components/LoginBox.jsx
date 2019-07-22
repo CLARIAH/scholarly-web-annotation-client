@@ -105,8 +105,8 @@ class LoginBox extends React.Component {
                 </div>
 
                 <form className={IDUtil.cssClassName('form', this.CLASS_PREFIX)} onSubmit={submitFunc}>
-                    <div>
-                        User Name
+                    <div className={IDUtil.cssClassName('form-row', this.CLASS_PREFIX)}>
+                        <label>User Name</label>
                         <input
                             ref={this.userNameRef}
                             className={IDUtil.cssClassName(warningMsg ? 'input invalid' : 'input')}
@@ -116,8 +116,8 @@ class LoginBox extends React.Component {
                         <div className="invalid-feedback">{warningMsg}</div>
                     </div>
 
-                    <div>
-                        Password
+                    <div className={IDUtil.cssClassName('form-row', this.CLASS_PREFIX)}>
+                        <label>Password</label>
                         <input
                             ref={this.pwRef}
                             className={IDUtil.cssClassName(warningMsg ? 'input invalid' : 'input')}
