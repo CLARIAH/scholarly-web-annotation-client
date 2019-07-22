@@ -1,0 +1,133 @@
+/**
+* Links
+*/
+
+.swac__link, .swac__link:visited{
+   color: $clPrimary;
+}
+
+.swac__link:hover{
+  color: lighten($clPrimary, 10);
+}
+
+.swac__link:active{
+   color: $clPrimaryAlt;
+}
+
+
+/**
+* Buttons
+*/
+
+.swac__btn {
+  border-radius: 2px;
+  cursor: pointer;
+  display: inline-block;
+  font-family: $fontHeading;
+  font-size: 0.96em;
+  text-transform: uppercase;
+  text-decoration: none;
+  height: 35px;
+  padding: 0 45px 0 30px;
+  box-sizing: border-box;
+  line-height: 35px;
+  box-shadow: 0 2px 2px rgba(0,0,0,0.1);
+  background-image: $arrowRightDarkUrl;
+  background-position: center right 10px;
+  background-repeat: no-repeat;
+  margin: 10px;
+  background-color: $clGrey;
+  color: $clDark;
+  border-width: 0;
+
+  &:hover {
+    background-color: lighten($clGrey, 5);
+    box-shadow: 0 3px 3px rgba(0,0,0,0.1);
+  }
+
+  &.primary {
+    background-color: $clPrimary;
+    color: $clWhite;
+    background-image: $arrowRightWhite40Url;
+    box-shadow: 0 2px 2px rgba(0,0,0,0.2);
+
+    &:hover {
+      background-color: lighten($clPrimary, 5);
+    }
+
+    &.plus {
+      background-image: $iconPlusUrl;
+      background-size: 12px;
+    }
+
+  }
+
+  &.plus {
+    background-image: $iconPlusGreyUrl;
+    background-size: 12px;
+  }
+
+  &.white {
+    background-color: $clWhite;
+    &:hover{
+      background-color: $clWhite;
+      opacity: 0.9;
+    }
+  }
+
+  &.blank {
+    box-shadow: none;
+    background-color: transparent;
+    background-image: none;
+    padding: 0 30px;
+
+    &:hover {
+      background-color: transparent;
+      opacity: 0.9;
+    }
+
+    &.warning:hover {
+      color: $clSecondary;
+      opacity: 1;
+    }
+  }
+}
+
+/**
+* Forms
+*/
+
+.swac__label {
+  color: $clPrimary;
+  text-transform: uppercase;
+  display: block;
+  font-size: 0.96em;
+  font-family: $fontHeading;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.swac__input, .swac__text-area {
+    border: 1px solid $clGreyTint;
+    border-left-width: 2px;
+    padding: 6px 10px;
+    border-radius: 2px;
+    font-family: $fontBody;
+    min-width: 200px;
+    margin-bottom: 15px;
+    transition: border $transition;
+
+    &:focus{
+      border-left: 2px solid $clPrimary;
+    }
+    &.invalid {
+      background-color: pink;
+    }
+    outline-color: $clPrimary;
+}
+
+.swac__text-area {
+  min-width: 400px;
+  min-height: 200px;
+}
+

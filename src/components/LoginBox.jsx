@@ -2,7 +2,7 @@ import React from 'react';
 import FlexModal from './FlexModal';
 import AppAnnotationStore from './../flux/AnnotationStore';
 import AnnotationActions from './../flux/AnnotationActions';
-import $ from 'jquery';
+import IDUtil from '../util/IDUtil';
 
 class LoginBox extends React.Component {
 
@@ -12,12 +12,15 @@ class LoginBox extends React.Component {
             selectedAction: "login",
             username: "",
             password: "",
-            warning: "",
+            warningMsg: null,
             showLoginModal: false,
             user: null,
             loggedIn: false,
             loginButtonLabel: "Login"
         }
+        this.userNameRef = React.createRef();
+        this.pwRef = React.createRef();
+        this.CLASS_PREFIX = 'lb'
     }
 
     componentDidMount() {
@@ -27,7 +30,7 @@ class LoginBox extends React.Component {
         AppAnnotationStore.bind('register-failed', this.loginFailed.bind(this));
     }
 
-    handleLogin() {
+    handleLogin = () => {
         if (!this.state.loggedIn) {
             this.setState({showLoginModal: true});
         } else {
@@ -39,132 +42,119 @@ class LoginBox extends React.Component {
             AnnotationActions.logoutUser();
             localStorage.removeItem("userDetails");
         }
-    }
+    };
 
-    loginSuccess(userDetails) {
+    loginSuccess = userDetails => {
         this.setState({
             user: userDetails,
             loggedIn: true,
             loginButtonLabel: "Logout " + userDetails.username,
-            warning: null
+            warningMsg: null
         });
         localStorage.setItem("userDetails", JSON.stringify(userDetails));
         this.hideLoginForm();
-    }
+    };
 
-    loginFailed(error) {
+    loginFailed = error => {
         this.setState({
-            warning: error.message
+            warningMsg: error.message
         });
-    }
+    };
 
-    showLoginForm() {
+    showLoginForm = () => {
         this.setState({showLoginModal: true});
-    }
+    };
 
-    hideLoginForm() {
-        $('#login__modal').modal('hide');//TODO ugly, but without this the static backdrop won't disappear!
+    hideLoginForm = e => {
         this.setState({showLoginModal: false});
-    }
+    };
 
-    handlePasswordChange(e) {
-        this.setState({password: e.target.value});
-    }
-
-    handleUsernameChange(e) {
-        this.setState({username: e.target.value});
-    }
-
-    handleActionChange(e) {
+    handleActionChange = e => {
         this.setState({selectedAction: e.target.value});
-    }
+    };
 
-    handleSubmit(e) {
+    handleSubmit = e => {
         e.preventDefault();
         let userDetails = {
-            username: this.state.username,
-            password: this.state.password
+            username: this.userRef.current.value,
+            password: this.pwRef.current.value
         }
         if (this.state.selectedAction === "register") {
             AnnotationActions.registerUser(userDetails);
         } else {
             AnnotationActions.loginUser(userDetails);
         }
-    }
+    };
+
+    renderLoginForm = (selectedAction, warningMsg, submitFunc, actionChangeFunc) => {
+        return (
+            <div className={IDUtil.cssClassName('panel', this.CLASS_PREFIX)}>
+                <div className={IDUtil.cssClassName('mode-select', this.CLASS_PREFIX)}>
+                    <label className={selectedAction === "login" ? "active" : null}>
+                        <input type="radio" value="login"
+                            checked={selectedAction === "login"}
+                            onChange={actionChangeFunc}
+                        /> Login
+                    </label>
+                    <label className={selectedAction === "register" ? "active" : null}>
+                        <input type="radio" value="register"
+                            checked={selectedAction === "register"}
+                            onChange={actionChangeFunc}
+                        /> Register
+                    </label>
+                </div>
+
+                <form className={IDUtil.cssClassName('form', this.CLASS_PREFIX)} onSubmit={submitFunc}>
+                    <div>
+                        User Name
+                        <input
+                            ref={this.userNameRef}
+                            className={IDUtil.cssClassName(warningMsg ? 'input invalid' : 'input')}
+                            type="text"
+                            placeholder="username"
+                        />
+                        <div className="invalid-feedback">{warningMsg}</div>
+                    </div>
+
+                    <div>
+                        Password
+                        <input
+                            ref={this.pwRef}
+                            className={IDUtil.cssClassName(warningMsg ? 'input invalid' : 'input')}
+                            type="password"
+                            placeholder="password"
+                        />
+                        <div className="invalid-feedback">{warningMsg}</div>
+                    </div>
+
+                    <input
+                        type="submit"
+                        className={IDUtil.cssClassName('btn')}
+                        value={selectedAction === "login" ? "Login" : "Register"}
+                    />
+                </form>
+            </div>
+        )
+    };
 
     render() {
-        this.showModal = this.state.showLoginModal;
-
+        const loginForm = this.renderLoginForm(
+            this.state.selectedAction,
+            this.state.warningMsg,
+            this.state.handleSubmit,
+            this.handleActionChange
+        );
         return (
-            <div>
-                <button className="btn btn-light"
-                    onClick={this.handleLogin.bind(this)}>
+            <div className={IDUtil.cssClassName('login-box')}>
+                <button className={IDUtil.cssClassName('btn')} onClick={this.handleLogin}>
                     {this.state.loginButtonLabel}
                 </button>
-                {this.showModal ?
+                {this.state.showLoginModal ?
                     <FlexModal
                         elementId="login__modal"
-                        handleHideModal={this.hideLoginForm.bind(this)}
+                        onClose={this.hideLoginForm}
                         title="Login or Register">
-                        <div className="container-fluid">
-                            <div className="row">
-                                <div className="col-12 text-right">
-                                    <div className="btn-group btn-group-toggle">
-                                        <label className={this.state.selectedAction === "login" ? "btn btn-primary active" : "btn btn-primary"}>
-                                            <input type="radio" value="login"
-                                                checked={this.state.selectedAction === "login"}
-                                                onChange={this.handleActionChange.bind(this)}
-                                            /> Login
-                                        </label>
-                                        <label className={this.state.selectedAction === "register" ? "btn btn-primary active" : "btn btn-primary"}>
-                                            <input type="radio" value="register"
-                                                checked={this.state.selectedAction === "register"}
-                                                onChange={this.handleActionChange.bind(this)}
-                                            /> Register
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <form className="loginForm" onSubmit={this.handleSubmit.bind(this)}>
-                                <div className="row">
-                                    <div className="col-6">
-                                        <label htmlFor="loginBoxUsername">Username</label>
-                                        <input
-                                            id="loginBoxUsername"
-                                            type="text"
-                                            placeholder="username"
-                                            value={this.state.username}
-                                            onChange={this.handleUsernameChange.bind(this)}
-                                            className={this.state.warning ? "form-control is-invalid" : "form-control"}
-                                        />
-                                        <div className="invalid-feedback">{this.state.warning}</div>
-                                    </div>
-                                    <div className="col-6">
-                                        <label htmlFor="loginBoxPassword">Password</label>
-                                        <input
-                                            id="loginBoxPassword"
-                                            type="password"
-                                            placeholder="password"
-                                            value={this.state.password}
-                                            onChange={this.handlePasswordChange.bind(this)}
-                                            className={this.state.warning ? "form-control is-invalid" : "form-control"}
-                                        />
-                                        <div className="invalid-feedback">{this.state.warning}</div>
-                                    </div>
-                                </div>
-                                <div className="row">
-                                    <div className="col-12">
-                                        <p className="text-right">
-                                            <input
-                                                type="submit"
-                                                className="btn btn-primary"
-                                                value={this.state.selectedAction === "login" ? "Login" : "Register"}
-                                            />
-                                        </p>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
+                        {loginForm}
                     </FlexModal>: null
                 }
             </div>

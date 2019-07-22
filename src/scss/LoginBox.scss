@@ -1,0 +1,26 @@
+.swac__login-box {
+
+	.swac__lb__panel {
+
+		display:flex;
+		padding:10px;
+
+		.swac__lb__mode-select {
+
+		}
+
+		.swac__lb__form {
+			input {
+				&.valid {
+					color:green;
+				}
+
+				&.invalid {
+					color:red;
+				}
+			}
+
+		}
+	}
+
+}

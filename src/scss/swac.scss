@@ -1,5 +1,12 @@
-@import 'bootstrap.scss';
-@import 'connection-indicator.scss';
+/*@import 'bootstrap.scss';*/
+@import '_colors';
+@import '_images';
+@import '_fonts';
+@import '_variables';
+@import '_layout';
+@import 'connection-indicator';
 @import 'permission-switch';
-@import 'editing.scss';
+@import 'editing';
 @import 'annotation-client';
+@import 'LoginBox';
+@import 'FlexModal';

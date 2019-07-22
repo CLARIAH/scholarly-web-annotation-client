@@ -1,0 +1,27 @@
+$clOrange: #F26C50;
+$clBlue: #468DCB;
+$clLightBlue: #9FBDD7;
+$clDark: #2D343A;
+$clDarkGrey: #9E9290;
+$clGreyTint: #EEE3E1;
+$clGrey: #FAF6F6;
+$clWhite: #FFFFFF;
+$clRed: desaturate(#F25050,30%);
+
+$clError: $clRed;
+$clWarning: #F29650;
+$clConfirm: #50F27A;
+
+
+
+$clPrimary: $clBlue;
+$clPrimaryAlt: $clLightBlue;
+$clSecondary: $clOrange;
+
+$colors: "primary" $clPrimary, "primary-alt" $clPrimaryAlt, "secondary" $clSecondary, "dark" $clDark, "dark-grey" $clDarkGrey, "grey" $clGrey, "grey-tint" $clGreyTint, "white" $clWhite;
+
+@each $color in $colors {
+  .background-color-#{nth($color, 1)}{
+      background-color: nth($color, 2);
+  }
+}
