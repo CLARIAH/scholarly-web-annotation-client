@@ -76,7 +76,7 @@ class LoginBox extends React.Component {
     handleSubmit = e => {
         e.preventDefault();
         let userDetails = {
-            username: this.userRef.current.value,
+            username: this.userNameRef.current.value,
             password: this.pwRef.current.value
         }
         if (this.state.selectedAction === "register") {
@@ -84,6 +84,7 @@ class LoginBox extends React.Component {
         } else {
             AnnotationActions.loginUser(userDetails);
         }
+        return false;
     };
 
     renderLoginForm = (selectedAction, warningMsg, submitFunc, actionChangeFunc) => {
@@ -141,7 +142,7 @@ class LoginBox extends React.Component {
         const loginForm = this.renderLoginForm(
             this.state.selectedAction,
             this.state.warningMsg,
-            this.state.handleSubmit,
+            this.handleSubmit,
             this.handleActionChange
         );
         return (
