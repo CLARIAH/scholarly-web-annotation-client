@@ -201,8 +201,7 @@ const RDFaUtil = {
     },
 
     getRDFaTextContent : function(node) {
-        console.debug('RDFa text content...')
-        var textContent = "";
+        let textContent = "";
         if (RDFaUtil.isRDFaIgnoreNode(node) || node.nodeType === window.Node.COMMENT_NODE)
             return "";
         node.childNodes.forEach((childNode) => {
@@ -267,10 +266,8 @@ const RDFaUtil = {
         var labelTrail = [];
         breadcrumb[resourceId] = {id: resourceId};
         while (!rootFound) {
-            console.debug('this must be the fly trap: ' + resourceId)
             let resource = RDFaUtil._lookupResource(resourceId, resourceIndex);
 
-            //TODO think about what this actually should do...
             if(!resource) {
                 break; //FIXME this used to say: continue, but that would result in an endless loop...
             }

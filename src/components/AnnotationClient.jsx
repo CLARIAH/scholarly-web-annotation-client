@@ -15,33 +15,41 @@ import CollectionViewer from './collection/CollectionViewer.jsx';
 import ResourceViewer from './resource/ResourceViewer.jsx';
 import AppAnnotationStore from './../flux/AnnotationStore';
 import AnnotationActions from '../flux/AnnotationActions.js';
+import IDUtil from '../util/IDUtil';
 import LoginBox from './LoginBox';
 //import '../css/swa.css';
 
 export default class AnnotationClient extends React.Component {
+
     constructor(props) {
         super(props);
         this.state = {
             user: null,
             view: "annotations",
             serverAvailable: false,
-            accessStatus: AnnotationActions.accessStatus,
+            accessStatus: AnnotationActions.accessStatus
             //accessStatus: ["private", "public"],
         };
+        this.CLASS_PREFIX = 'acl'
     }
+
     componentDidMount() {
         AppAnnotationStore.bind('login-succeeded', this.setUser.bind(this));
         AppAnnotationStore.bind('register-succeeded', this.setUser.bind(this));
         AppAnnotationStore.bind('logout-user', this.setUser.bind(this));
         AppAnnotationStore.bind('server-status-change', this.setServerAvailable.bind(this));
     }
+
     setServerAvailable(serverAvailable) {
         this.setState({serverAvailable: serverAvailable});
     }
+
     setUser(user) {
         this.setState({user: user});
     }
-    handleAccessPreferenceChange(event) {
+
+    handleAccessPreferenceChange = event => {
+        console.debug(event)
         let level = event.target.value;
         var accessStatus = this.state.accessStatus;
         if (!accessStatus.includes(level)) {
@@ -53,113 +61,96 @@ export default class AnnotationClient extends React.Component {
             accessStatus: accessStatus
         });
         AnnotationActions.setAccessStatus(accessStatus);
+    };
+
+    selectTab(view) {
+        this.setState({view : view})
     }
-    render() {
-        let component = this;
-        let annotationViewer = (
-            <AnnotationViewer
-                currentUser={this.state.user}
-                config={this.props.config}
-            />
-        );
-        let collectionViewer = (
-            <CollectionViewer
-                currentUser={this.state.user}
-                config={this.props.config}
-            />
-        );
-        let resourceViewer = (
-            <ResourceViewer
-                currentUser={this.state.user}
-                config={this.props.config}
-            />
-        )
-        //let itemTypes = ["annotations", "resources"];
+
+    renderTabbedViews = (currentView, user, config) => {
         let itemTypes = ["annotations", "collections", "resources"];
-        var viewer;
-        let viewerTabContents = itemTypes.map((itemType) => {
+
+        const viewerTabs = itemTypes.map((itemType) => {
+            return (
+                <a
+                    key={itemType + '__tab_option'}
+                    href={'#' + itemType}
+                    aria-current={currentView === itemType ? "page" : null}
+                    className={currentView === itemType ? 'active' : null}
+                    onClick={this.selectTab.bind(this, itemType)}
+                >
+                    {itemType}
+                </a>
+            )
+        });
+
+        let viewer = null;
+        const viewerTabContents = itemTypes.map((itemType) => {
             if (itemType === "annotations")
-                viewer = annotationViewer;
+                viewer = <AnnotationViewer currentUser={user} config={config}/>;
             if (itemType === "collections")
-                viewer = collectionViewer;
+                viewer = <CollectionViewer currentUser={user} config={config}/>;
             if (itemType === "resources")
-                viewer = resourceViewer;
+                viewer = <ResourceViewer currentUser={user} config={config}/>;
             return (
                 <div
                     key={itemType + '__tab_content'}
                     id={itemType}
-                    className={this.state.view === itemType ? 'tab-pane active' : 'tab-pane'}>
+                    style={{display : currentView === itemType ? 'block' : 'none'}}>
                     {viewer}
                 </div>
             )
         });
-        let accessPreferences = (
-            <div
-                className="access-preferences"
-            >
+
+        return (
+            <div>
+                <div className={IDUtil.cssClassName('submenu')}>{viewerTabs}</div>
+                <div>{viewerTabContents}</div>
+            </div>
+        )
+    };
+
+    renderAccessPreferences = (accessStatus, onChangeFunc) => {
+        return (
+            <div className="access-preferences">
                 <div>Show:</div>
                 <div>
                     <label>
-                        <input
-                            type="checkbox"
-                            value="private"
-                            checked={this.state.accessStatus.includes("private")}
-                            onChange={this.handleAccessPreferenceChange.bind(this)}
-                        />
-                        Private annotations</label>
+                        <input type="checkbox" value="private" checked={accessStatus.includes("private")} onChange={onChangeFunc}/>
+                        Private annotations
+                    </label>
                 </div>
                 <div>
                     <label>
-                        <input
-                            type="checkbox"
-                            value="public"
-                            checked={this.state.accessStatus.includes("public")}
-                            onChange={this.handleAccessPreferenceChange.bind(this)}
-                        />
-                        Public annotations</label>
+                        <input type="checkbox" value="public" checked={accessStatus.includes("public")} onChange={onChangeFunc}/>
+                        Public annotations
+                    </label>
                 </div>
             </div>
         )
-        const viewerTabs = itemTypes.map((itemType) => {
-            return (
-                <li
-                    key={itemType + '__tab_option'}
-                    className="nav-item viewer-tab "
-                >
-                    <a data-toggle="tab" href={'#' + itemType} className={component.state.view === itemType ? 'nav-link active' : 'nav-link'}>
-                        {itemType}
-                    </a>
-                </li>
-            )
-        });
+    };
 
-        let indicator = "led-red";
-        if (this.state.serverAvailable) {
-            indicator = "led-green";
-        }
-        const serverAvailable = (
-                <div className={indicator}></div>
-        );
+    renderServerStatus = serverAvailable => {
+        return (
+            <div className={IDUtil.cssClassName('server-status', this.CLASS_PREFIX)}>
+                <label>Annotation server status:</label>
+                <div className={serverAvailable ? IDUtil.cssClassName('led-green') : IDUtil.cssClassName('led-red')}/>
+            </div>
+        )
+    };
+
+    render() {
+        const tabbedViews = this.renderTabbedViews(this.state.view, this.state.user, this.props.config);
+        const accessPreferences = this.renderAccessPreferences(this.state.accessStatus, this.handleAccessPreferenceChange)
+        const serverStatus = this.renderServerStatus(this.state.serverAvailable);
 
         return (
-            <div className="annotationClient">
-                <div className="row">
-                    <h1 className="col">Annotator</h1>
-                    <div className="col-auto"><LoginBox user={this.state.user}/></div>
-                </div>
-                <div className="server-status row">
-                    <div className="col">Annotation server status:</div>
-                    <div className="col-auto">{serverAvailable}</div>
-                </div>
-                <div>
-                    <ul className="nav nav-tabs nav-fill viewer-tabs">
-                        {viewerTabs}
-                    </ul>
-                    <div className="tab-content">
-                        {accessPreferences}
-                        {viewerTabContents}
-                    </div>
-                </div>
+            <div className={IDUtil.cssClassName('annotation-client')}>
+                <h1>Annotator</h1>
+                <LoginBox user={this.state.user}/>
+                {serverStatus}
+                {accessPreferences}
+                {tabbedViews}
             </div>
         );
     }

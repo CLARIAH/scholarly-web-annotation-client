@@ -26,7 +26,7 @@ import DOMUtil from "./DOMUtil.js";
 
 const SelectionUtil = {
 
-    currentSelection : null,
+    currentSelection : null, //FIXME this is an odd place to store the current selection
 
     /* ------------------------------------ HIGHLIGHTING RDFa SELECTION FUNCTIONS -------------------- */
 
@@ -234,7 +234,22 @@ const SelectionUtil = {
         return SelectionUtil.currentSelection;
     },
 
-    //sets the current DOM selection
+    /*
+        Sets the current DOM selection to SelectionUtil.currentSelection
+
+        Example object:
+
+        {
+            startNode: [DOMNode object],
+            startOffset: 1,
+            endNode: [DOMNode object],
+            endOffset: 3,
+            mimeType: "text",
+            ancestors: [],
+            containerNode: [],
+            selectionText: 'somestring skipping ignorable RDFa DOM nodes'
+        }
+    */
     setDOMSelection() {
         let currentSelection = null;
 

@@ -126,12 +126,9 @@ const TargetUtil = {
     // given a list of nodes, select all RDFa enriched nodes
     // and return as candidate annotation targets
     getRDFaCandidates : (nodes, resourceIndex) => {
-        console.debug('RDFA candidates => 1')
         console.debug(nodes)
         return RDFaUtil.selectRDFaNodes(nodes).map((node) => {
-            console.debug('RDFA sub => 1')
             const resourceId = RDFaUtil.getRDFaResource(node);
-            console.debug('RDFA sub => 2')
             return {
                 node: node,
                 type: "resource",
@@ -148,13 +145,9 @@ const TargetUtil = {
 
     // Return all potential annotation targets.
     getCandidates : (annotations, defaultTargets, resourceData) => {
-        console.debug("I am here (target util) => 1")
         let candidateResources = TargetUtil.getCandidateRDFaTargets(defaultTargets, resourceData.resourceIndex);
-        console.debug("I am here (target util) => 2")
         let candidateExternalResources = TargetUtil.getCandidateExternalResources(candidateResources, resourceData);
-        console.debug("I am here (target util) => 3")
         let candidateAnnotations = TargetUtil.selectCandidateAnnotations(annotations, candidateResources.highlighted);
-        console.debug("I am here (target util) => 4")
         return {resource: candidateResources, annotation: candidateAnnotations, external: candidateExternalResources};
     },
 
@@ -218,27 +211,13 @@ const TargetUtil = {
     // Annotation targets are elements containing
     // or contained in the selected passage.
     getCandidateRDFaTargets : (defaultTargets, resourceIndex) => {
-        console.debug(defaultTargets);
-        console.debug(resourceIndex);
-        console.debug('rdfa target finding => 1');
-
         const selection = SelectionUtil.getDOMSelection();
-        console.debug(selection);
-        console.debug('rdfa target finding => 2');
-
         const biggerNodes = TargetUtil.getRDFaCandidates(selection.ancestors, resourceIndex);
-        console.debug('rdfa target finding => 5', biggerNodes);
-
         let selectionNodes = TargetUtil.findSelectionRDFaNodes(selection);
-        console.debug('rdfa target finding => 6', selectionNodes);
-
         let smallerNodes = TargetUtil.getRDFaCandidates(selectionNodes, resourceIndex);
-        console.debug('rdfa target finding => 7', smallerNodes);
-
         let wholeNodes = biggerNodes.concat(smallerNodes);
-        console.debug('rdfa target finding => 8', wholeNodes);
-
         let highlighted = null;
+
         if (selection.startOffset !== undefined || selection.rect !== undefined || selection.interval !== undefined) {
             let container = biggerNodes[biggerNodes.length - 1];
             highlighted = TargetUtil.findHighlighted(container, selection, resourceIndex);

@@ -131,3 +131,66 @@
   min-height: 200px;
 }
 
+/* submenu + count label */
+
+.swac__count {
+  display: inline-block;
+  font-family: $fontHeading;
+  float: right;
+  margin-left: 15px;
+  background-color: $clSecondary;
+  color: $clWhite;
+  border-radius: 25px;
+  font-size: 0.8em;
+  font-weight: bold;
+  padding: 2px 4px 3px 4px;
+  line-height: 13px;
+  min-width: 18px;
+  text-align: center;
+  margin-top: 1px;
+}
+
+.swac__submenu {
+  border-bottom: 1px solid $clGreyTint;
+  margin-bottom: 20px;
+  padding-left: 20px;
+
+  a{
+    font-size: 15px;
+    font-family: $fontHeading;
+    color: $clDark;
+    padding: 10px 20px;
+    display: inline-block;
+    border-bottom: 3px solid white;
+    margin-right: 1px;
+    &:hover{
+      background-color: $clGrey;
+      border-bottom-color: $clDarkGrey;
+      text-decoration: none;
+    }
+
+    &.active, &.active:hover{
+      border-bottom-color: $clSecondary;
+      background-color: $clGrey;
+    }
+  }
+}
+
+/* for showing the connection status with the server */
+.swac__led-green {
+  margin: 3px;
+  width: 15px;
+  height: 15px;
+  background-color: #ABFF00;
+  border-radius: 50%;
+  box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #89FF00 0 2px 12px;
+}
+
+.swac__led-red {
+  margin: 3px;
+  width: 15px;
+  height: 15px;
+  background-color: #F00;
+  border-radius: 50%;
+  box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #441313 0 -1px 9px, rgba(255, 0, 0, 0.5) 0 2px 12px;
+}
