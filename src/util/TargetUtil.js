@@ -218,18 +218,15 @@ const TargetUtil = {
     // Annotation targets are elements containing
     // or contained in the selected passage.
     getCandidateRDFaTargets : (defaultTargets, resourceIndex) => {
-        console.debug('rdfa target finding => 1', resourceIndex);
+        console.debug(defaultTargets);
+        console.debug(resourceIndex);
+        console.debug('rdfa target finding => 1');
 
         const selection = SelectionUtil.getDOMSelection();
-        console.debug('rdfa target finding => 2', selection);
+        console.debug(selection);
+        console.debug('rdfa target finding => 2');
 
-        const ancestors = DOMUtil.findCommonAncestors(selection.startNode, selection.endNode);
-        console.debug('rdfa target finding => 3', ancestors);
-
-        selection.containerNode = ancestors[ancestors.length - 1];
-        console.debug('rdfa target finding => 4', selection);
-
-        const biggerNodes = TargetUtil.getRDFaCandidates(ancestors, resourceIndex);
+        const biggerNodes = TargetUtil.getRDFaCandidates(selection.ancestors, resourceIndex);
         console.debug('rdfa target finding => 5', biggerNodes);
 
         let selectionNodes = TargetUtil.findSelectionRDFaNodes(selection);
@@ -238,10 +235,10 @@ const TargetUtil = {
         let smallerNodes = TargetUtil.getRDFaCandidates(selectionNodes, resourceIndex);
         console.debug('rdfa target finding => 7', smallerNodes);
 
-        const wholeNodes = biggerNodes.concat(smallerNodes);
+        let wholeNodes = biggerNodes.concat(smallerNodes);
         console.debug('rdfa target finding => 8', wholeNodes);
 
-        const highlighted = null;
+        let highlighted = null;
         if (selection.startOffset !== undefined || selection.rect !== undefined || selection.interval !== undefined) {
             let container = biggerNodes[biggerNodes.length - 1];
             highlighted = TargetUtil.findHighlighted(container, selection, resourceIndex);

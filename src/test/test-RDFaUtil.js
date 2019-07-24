@@ -442,7 +442,7 @@ describe("RDFaUtil parse of FRBR letter", () => {
         });
     });
 
-    describe("lookupResource", () => {
+    describe("_lookupResource", () => {
 
         before((done) => {
             let observerNodes = document.getElementsByClassName("annotation-target-observer");
@@ -454,7 +454,7 @@ describe("RDFaUtil parse of FRBR letter", () => {
             let typeOf = "hi:EditionText";
             let resourceId = "urn:vangogh:letter:001.original";
             RDFaUtil.indexRDFa().then((resourceIndex) => {
-                let entry = RDFaUtil.lookupResource(resourceId, resourceIndex);
+                let entry = RDFaUtil._lookupResource(resourceId, resourceIndex);
                 expect(entry).to.not.equal(null);
                 done();
             });

@@ -28,6 +28,8 @@ const SelectionUtil = {
 
     currentSelection : null,
 
+    /* ------------------------------------ HIGHLIGHTING RDFa SELECTION FUNCTIONS -------------------- */
+
     makeEditableAndHighlight : function(colour) {
         var sel = window.getSelection();
         if (sel.rangeCount && sel.getRangeAt) {
@@ -126,13 +128,68 @@ const SelectionUtil = {
         }
     },
 
-    checkDOMElement : (element) => {
+    /* ------------------------------------ SELECTING AUDIO/VIDEO/IMAGE "MANUALLY" -------------------- */
+
+    setSelection : function(element, selection, mimeType) {
+        SelectionUtil._checkDOMElement(element);
+        SelectionUtil.currentSelection = {
+            startNode: element,
+            endNode: element,
+            mimeType: mimeType
+        };
+        if (!selection) {
+            return true;
+        } else if (mimeType.startsWith("video") || mimeType.startsWith("audio")) {
+            SelectionUtil.checkInterval(selection);
+            SelectionUtil.currentSelection.interval = selection;
+        } else if (mimeType.startsWith("image")) {
+            SelectionUtil.checkRectangle(selection);
+            SelectionUtil.currentSelection.rect = selection;
+        }
+    },
+
+    setImageSelection : function(element, rect) {
+        SelectionUtil._checkDOMElement(element);
+        SelectionUtil.checkRectangle(rect);
+        SelectionUtil.currentSelection = {
+            startNode: element,
+            endNode: element,
+            rect: rect,
+            mimeType: "image"
+        };
+    },
+
+    setAudioSelection : function(element, interval) {
+        SelectionUtil._checkDOMElement(element);
+        SelectionUtil.checkInterval(interval);
+        SelectionUtil.currentSelection = {
+            startNode: element,
+            endNode: element,
+            interval: interval,
+            mimeType: "audio"
+        };
+    },
+
+    setVideoSelection : function(element, interval) {
+        SelectionUtil._checkDOMElement(element);
+        SelectionUtil.checkInterval(interval);
+        SelectionUtil.currentSelection = {
+            startNode: element,
+            endNode: element,
+            interval: interval,
+            mimeType: "video"
+        };
+    },
+
+    _checkDOMElement : (element) => {
         if (element === undefined)
             throw Error("argument 'element' is required.");
         if (!(element instanceof Element) || !document.contains(element))
             throw Error("element must be a DOM element.");
         return true;
     },
+
+    /* ------------------------------------ AUDIO/VIDEO/IMAGE VALIDATION FUNCTIONS (see AnnotationUtil) -------------------- */
 
     checkRectangle : (rect) => {
         if (rect === undefined)
@@ -166,89 +223,7 @@ const SelectionUtil = {
         return true;
     },
 
-    setSelection : function(element, selection, mimeType) {
-        SelectionUtil.checkDOMElement(element);
-        SelectionUtil.currentSelection = {
-            startNode: element,
-            endNode: element,
-            mimeType: mimeType
-        };
-        if (!selection) {
-            return true;
-        } else if (mimeType.startsWith("video") || mimeType.startsWith("audio")) {
-            SelectionUtil.checkInterval(selection);
-            SelectionUtil.currentSelection.interval = selection;
-        } else if (mimeType.startsWith("image")) {
-            SelectionUtil.checkRectangle(selection);
-            SelectionUtil.currentSelection.rect = selection;
-        }
-    },
-
-    setImageSelection : function(element, rect) {
-        SelectionUtil.checkDOMElement(element);
-        SelectionUtil.checkRectangle(rect);
-        SelectionUtil.currentSelection = {
-            startNode: element,
-            endNode: element,
-            rect: rect,
-            mimeType: "image"
-        };
-    },
-
-    setAudioSelection : function(element, interval) {
-        SelectionUtil.checkDOMElement(element);
-        SelectionUtil.checkInterval(interval);
-        SelectionUtil.currentSelection = {
-            startNode: element,
-            endNode: element,
-            interval: interval,
-            mimeType: "audio"
-        };
-    },
-
-    setVideoSelection : function(element, interval) {
-        SelectionUtil.checkDOMElement(element);
-        SelectionUtil.checkInterval(interval);
-        SelectionUtil.currentSelection = {
-            startNode: element,
-            endNode: element,
-            interval: interval,
-            mimeType: "video"
-        };
-    },
-
-    ensureFocusAnchorAreLeafNodes(selection) {
-        if (selection.focusNode.nodeType === Node.ELEMENT_NODE) {
-            selection.focusNode = selection.focusNode.childNodes[selection.focusOffset];
-            selection.focusOffset = 0;
-        }
-        if (selection.anchorNode.nodeType === Node.ELEMENT_NODE) {
-            selection.anchorNode = selection.anchorNode.childNodes[selection.anchorOffset];
-            selection.anchorOffset = 0;
-        }
-    },
-
-    endPreceedsStart(selection) {
-        let position = selection.startNode.compareDocumentPosition(selection.endNode);
-        let backwards = position & Node.DOCUMENT_POSITION_PRECEDING;
-        if (position === 0 && selection.startOffset > selection.endOffset)
-            backwards = 1;
-        return (backwards !== 0);
-    },
-
-    ensureSelectionStartPreceedsEnd() {
-        var selection = SelectionUtil.currentSelection;
-        if (SelectionUtil.endPreceedsStart(selection)) {
-            let endNode = selection.startNode;
-            let endOffset = selection.startOffset;
-            selection.startNode = selection.endNode;
-            selection.startOffset = selection.endOffset;
-            selection.endNode = endNode;
-            selection.endOffset = endOffset;
-        }
-    },
-
-    /* -------------------------------------------- SET/GET THE CURRENT SELECTION ---------------------------------- */
+    /* -------------------------------------------- SET/GET THE CURRENT DOM SELECTION ---------------------------------- */
 
     // Find nodes and offsets corresponding to the selection.
     // Start node is always before end node in presentation order
@@ -261,66 +236,110 @@ const SelectionUtil = {
 
     //sets the current DOM selection
     setDOMSelection() {
+        let currentSelection = null;
+
         //first get the selection from the overall DOM
-        const selection = document.getSelection ? document.getSelection() : null;
+        let rawSelection = document.getSelection ? document.getSelection() : null;
+        const noSelection = !rawSelection || rawSelection.isCollapsed;
 
         //if something was selected, use that as the current selection, else use the observer DOME node as a whole?
-        if (!selection || selection.isCollapsed) {
-            SelectionUtil._setObserverNodeSelection();
-            return true;
+        if (noSelection) {
+            console.debug('returning observer node selection');
+            currentSelection = SelectionUtil._getObserverNodeSelection();
         } else {
-            SelectionUtil._setSelectionStartEndNodes(selection);
+            console.debug('further processing the raw selection');
+            currentSelection = SelectionUtil._getSelectionStartEndNodes(rawSelection);
         }
 
-        // Set container node of start and end nodes (so defining which parent DOM node encaptulates the selection)
-        SelectionUtil.currentSelection.selectionText = selection ? selection.toString() : null;//TODO or set to ''
-        SelectionUtil._setContainerNode();
+        //validate the selection object (FIXME should be done by above functions...)
+        SelectionUtil._checkValidTextSelection(currentSelection);
 
-        // if end node or parent is an ignorable element, set parent to previous text node
-        const endParent = SelectionUtil.currentSelection.endNode.parentNode;
-        if (RDFaUtil.isRDFaIgnoreNode(endParent)) {
-            const prevNode = DOMUtil.getPreviousTextNode(SelectionUtil.currentSelection.endNode);
-            SelectionUtil.currentSelection.endNode = prevNode;
-            SelectionUtil.currentSelection.endOffset = prevNode.length;
-            //SelectionUtil._adjustSelection(SelectionUtil.currentSelection);
+        //get the common ancestors of the selection
+        currentSelection.ancestors = DOMUtil.findCommonAncestors(currentSelection.startNode, currentSelection.endNode);
+        currentSelection.containerNode = SelectionUtil._getContainerNode(currentSelection);
+
+
+        //only do this if there is a text selection
+        if(!noSelection) {
+            // Set container node of start and end nodes (so defining which parent DOM node encaptulates the selection)
+            currentSelection.selectionText = rawSelection ? rawSelection.toString() : null;//TODO or set to ''
+
+            // if end node or parent is an ignorable element, set parent to previous text node
+            const endParent = currentSelection.endNode.parentNode;
+            if (RDFaUtil.isRDFaIgnoreNode(endParent)) {
+                const prevNode = DOMUtil.getPreviousTextNode(currentSelection.endNode);
+                currentSelection.endNode = prevNode;
+                currentSelection.endOffset = prevNode.length;
+            }
+            currentSelection.selectionText = SelectionUtil._getSelectionText(currentSelection);
         }
-        SelectionUtil._setSelectionText();
+
+        //finally set the selection to the SelectionUtil (FIXME not a nice place to keep things...)
+        SelectionUtil.currentSelection = currentSelection;
     },
 
     //get the observer DOM node and use that as the current selection
-    _setObserverNodeSelection() {
-        let observerNodes = DOMUtil.getObserverNodes();
-        SelectionUtil.currentSelection = {
+    _getObserverNodeSelection() {
+        const observerNodes = DOMUtil.getObserverNodes(); //FIXME validate there being observer nodes!!!
+        return {
             startNode: observerNodes[0],
             endNode: observerNodes[observerNodes.length - 1],
             mimeType: "multipart" // TODO: FIX based on actual content; this will not pass _checkValidTextSelection()!
         };
     },
 
-    _setSelectionStartEndNodes(selection) {
-        SelectionUtil.ensureFocusAnchorAreLeafNodes(selection);
-        SelectionUtil.currentSelection = {
-            startNode: selection.anchorNode,
-            startOffset: selection.anchorOffset,
-            endNode: selection.focusNode,
-            endOffset: selection.focusOffset,
+    _getSelectionStartEndNodes(rawSelection) {
+        rawSelection = SelectionUtil._ensureFocusAnchorAreLeafNodes(rawSelection);
+        return SelectionUtil._ensureSelectionStartPreceedsEnd({
+            startNode: rawSelection.anchorNode,
+            startOffset: rawSelection.anchorOffset,
+            endNode: rawSelection.focusNode,
+            endOffset: rawSelection.focusOffset,
             mimeType: "text"
-        };
-        SelectionUtil.ensureSelectionStartPreceedsEnd();
+        });
     },
 
-    _setContainerNode() {
-        SelectionUtil._checkValidTextSelection();
-        const currentSelection = SelectionUtil.currentSelection;
-        const ancestors = DOMUtil.findCommonAncestors(currentSelection.startNode, currentSelection.endNode);
-        currentSelection.containerNode = ancestors[ancestors.length - 1];
+    _ensureFocusAnchorAreLeafNodes(rawSelection) {
+        if (rawSelection.focusNode.nodeType === Node.ELEMENT_NODE) {
+            rawSelection.focusNode = rawSelection.focusNode.childNodes[rawSelection.focusOffset];
+            rawSelection.focusOffset = 0;
+        }
+        if (rawSelection.anchorNode.nodeType === Node.ELEMENT_NODE) {
+            rawSelection.anchorNode = rawSelection.anchorNode.childNodes[rawSelection.anchorOffset];
+            rawSelection.anchorOffset = 0;
+        }
+        return rawSelection;
     },
 
-    _checkValidTextSelection() {
-        if (!SelectionUtil.currentSelection) {
+    _ensureSelectionStartPreceedsEnd(selection) {
+        if (SelectionUtil._endPreceedsStart(selection)) {
+            let endNode = selection.startNode;
+            let endOffset = selection.startOffset;
+            selection.startNode = selection.endNode;
+            selection.startOffset = selection.endOffset;
+            selection.endNode = endNode;
+            selection.endOffset = endOffset;
+        }
+        return selection;
+    },
+
+    _endPreceedsStart(selection) {
+        let position = selection.startNode.compareDocumentPosition(selection.endNode);
+        let backwards = position & Node.DOCUMENT_POSITION_PRECEDING;
+        if (position === 0 && selection.startOffset > selection.endOffset)
+            backwards = 1;
+        return (backwards !== 0);
+    },
+
+    _getContainerNode(selection) {
+        const ancestors = selection.ancestors ? selection.ancestors : DOMUtil.findCommonAncestors(selection.startNode, selection.endNode);
+        return ancestors[ancestors.length - 1];
+    },
+
+    _checkValidTextSelection(selection) {
+        if (!selection) {
             throw Error("No currentSelection set");
         }
-        const selection = SelectionUtil.currentSelection;
         if (!selection.mimeType) {
             throw Error("No currentSelection mimeType set")
         } else if (selection.mimeType !== "text") {
@@ -343,22 +362,20 @@ const SelectionUtil = {
      *   (trimmed to avoid incorrectly computed leading and trailing whitespace)
      *   - remove text node content from unfiltered selection text if it is an ignore node
      */
-    _setSelectionText() {
-        SelectionUtil._checkValidTextSelection();
-        if (!SelectionUtil.currentSelection.containerNode) {
-            SelectionUtil._setContainerNode();
-        }
-        let selection = SelectionUtil.currentSelection;
-        var startOffset = SelectionUtil._getTrimmedOffset(selection.startNode, selection.startOffset);
-        var endOffset = SelectionUtil._getTrimmedOffset(selection.endNode, selection.endOffset);
-        let textNodes = RDFaUtil.getRDFaTextNodesExtended(selection.containerNode)
-        let ignoreNodes = RDFaUtil.getRDFaIgnoreNodes(selection.containerNode);
+    _getSelectionText(selection) {
+        let selectionText = "";
+        let unfilteredText = selection.selectionText;
+
+        const startOffset = SelectionUtil._getTrimmedOffset(selection.startNode, selection.startOffset);
+        const endOffset = SelectionUtil._getTrimmedOffset(selection.endNode, selection.endOffset);
+
+        const textNodes = RDFaUtil.getRDFaTextNodesExtended(selection.containerNode)
+        const ignoreNodes = RDFaUtil.getRDFaIgnoreNodes(selection.containerNode);
         if (ignoreNodes.length === 0)
-            return true; // no ignore nodes in selection, no changes needed
-        var include = false;
-        var textChunks = [];
-        var unfilteredText = selection.selectionText;
-        selection.selectionText = "";
+            return unfilteredText; // no ignore nodes in selection, no changes needed
+
+        let include = false;
+        //const textChunks = []; NOT USED?
         textNodes.forEach((textNode) => {
             var displayText = DOMUtil.getTextNodeDisplayText(textNode.node);
             let startNodePosition = selection.startNode.compareDocumentPosition(textNode.node)
@@ -377,22 +394,22 @@ const SelectionUtil = {
             if (include){
                 if (textNode.ignore) {
                     let ignoreOffset = unfilteredText.indexOf(displayText);
-                    selection.selectionText += unfilteredText.substr(0, ignoreOffset);
+                    selectionText += unfilteredText.substr(0, ignoreOffset);
                     let chunkLength = ignoreOffset + displayText.length;
                     unfilteredText = unfilteredText.substr(chunkLength);
                 } else {
                     let chunkLength = unfilteredText.indexOf(displayText.trim()) + displayText.trim().length;
-                    selection.selectionText += unfilteredText.substr(0, chunkLength);
+                    selectionText += unfilteredText.substr(0, chunkLength);
                     unfilteredText = unfilteredText.substr(chunkLength);
                 }
-                textChunks.push(displayText.trim());
+                //textChunks.push(displayText.trim());
             }
             if (selection.endNode === textNode.node || endNodePreceeds) {
                 include = false;
             }
         });
         // if there is any trailing whitespace in the unfiltered text, move it to the filtered text
-        selection.selectionText += unfilteredText;
+        return selectionText + unfilteredText;
     },
 
     _getTrimmedOffset : function(node, offset) {

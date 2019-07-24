@@ -201,6 +201,7 @@ const RDFaUtil = {
     },
 
     getRDFaTextContent : function(node) {
+        console.debug('RDFa text content...')
         var textContent = "";
         if (RDFaUtil.isRDFaIgnoreNode(node) || node.nodeType === window.Node.COMMENT_NODE)
             return "";
@@ -260,14 +261,19 @@ const RDFaUtil = {
     },
 
     createBreadcrumbTrail(resourceId, resourceIndex) {
+        console.debug('creating a breadcrumb trail')
         var rootFound = false;
         var breadcrumb = {};
         var labelTrail = [];
         breadcrumb[resourceId] = {id: resourceId};
         while (!rootFound) {
-            let resource = RDFaUtil.lookupResource(resourceId, resourceIndex);
-            if(!resource) continue;
-            //let source = AnnotationActions.lookupIdentifier(resourceId);
+            console.debug('this must be the fly trap: ' + resourceId)
+            let resource = RDFaUtil._lookupResource(resourceId, resourceIndex);
+
+            //TODO think about what this actually should do...
+            if(!resource) {
+                break; //FIXME this used to say: continue, but that would result in an endless loop...
+            }
             breadcrumb[resource.rdfaResource].type = resource.rdfTypeLabel;
             RDFaUtil.addBreadcrumb(labelTrail, resource);
             if (resource !== undefined && resource.parentResource) {
@@ -281,6 +287,17 @@ const RDFaUtil = {
             }
         }
         return labelTrail;
+    },
+
+    _lookupResource : (resourceId, resourceIndex) => {
+        if (!resourceIndex) {
+            throw Error("No RDFa resources indexed. Run RDFaUtil.indexRDFa to access RDFa resources.");
+        }
+        if (resourceIndex.resources.hasOwnProperty(resourceId)) {
+            return resourceIndex.resources[resourceId];
+        } else {
+            return null;
+        }
     },
 
     updateStack : function(stack, node) {
@@ -431,17 +448,6 @@ const RDFaUtil = {
             }
         }
         return vocabularyURLs;
-    },
-
-    lookupResource : (resourceId, resourceIndex) => {
-        if (!resourceIndex) {
-            throw Error("No RDFa resources indexed. Run RDFaUtil.indexRDFa to access RDFa resources.");
-        }
-        if (resourceIndex.resources.hasOwnProperty(resourceId)) {
-            return resourceIndex.resources[resourceId];
-        } else {
-            return null;
-        }
     },
 
     indexRDFa : () => {

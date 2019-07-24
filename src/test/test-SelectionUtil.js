@@ -200,7 +200,7 @@ describe("SelectionUtil", () => {
 
     });
 
-    describe("_setContainerNode", () => {
+    describe("_getContainerNode", () => {
 
         beforeEach((done) => {
             loadRDFaPage();
@@ -219,7 +219,7 @@ describe("SelectionUtil", () => {
                 endOffset: 5, // stop after "where"
                 mimeType: "text",
             }
-            SelectionUtil._setContainerNode();
+            SelectionUtil.currentSelection.containerNode = SelectionUtil._getContainerNode(SelectionUtil.currentSelection);
             expect(SelectionUtil.currentSelection.hasOwnProperty("containerNode")).to.equal(true);
             expect(SelectionUtil.currentSelection.containerNode).to.equal(ele);
             done();
@@ -227,7 +227,7 @@ describe("SelectionUtil", () => {
 
     });
 
-    describe("_setSelectionText", () => {
+    describe("_getSelectionText", () => {
 
         beforeEach((done) => {
             loadRDFaPage();
@@ -241,7 +241,7 @@ describe("SelectionUtil", () => {
             let error = null;
             SelectionUtil.currentSelection = null;
             try {
-                SelectionUtil._setSelectionText();
+                SelectionUtil._getSelectionText();
             } catch (err) {
                 error = err;
             }
@@ -254,7 +254,7 @@ describe("SelectionUtil", () => {
             let error = null;
             SelectionUtil.currentSelection = {wrong: "object"};
             try {
-                SelectionUtil._setSelectionText();
+                SelectionUtil._getSelectionText();
             } catch (err) {
                 error = err;
             }
@@ -267,7 +267,7 @@ describe("SelectionUtil", () => {
             let error = null;
             SelectionUtil.currentSelection = {wrong: "object", mimeType: "video"};
             try {
-                SelectionUtil._setSelectionText();
+                SelectionUtil._getSelectionText();
             } catch (err) {
                 error = err;
             }
@@ -280,7 +280,7 @@ describe("SelectionUtil", () => {
             let error = null;
             SelectionUtil.currentSelection = {wrong: "object", mimeType: "text"};
             try {
-                SelectionUtil._setSelectionText();
+                SelectionUtil._getSelectionText();
             } catch (err) {
                 error = err;
             }
@@ -297,12 +297,14 @@ describe("SelectionUtil", () => {
                 endNode: ele.childNodes[2],
                 endOffset: 26, // stop after "where"
                 mimeType: "text",
-                selectionText: "text [ with some content ] where",
+                selectionText: "text [ with some content ] where"
             }
+
+            SelectionUtil.currentSelection.containerNode = SelectionUtil._getContainerNode(SelectionUtil.currentSelection)
+            SelectionUtil.currentSelection.selectionText = SelectionUtil._getSelectionText(SelectionUtil.currentSelection)
             //console.log(ele.textContent);
-            SelectionUtil._setContainerNode();
             //let text = null;
-            SelectionUtil._setSelectionText();
+            ;
             //console.log("currentSelection:", SelectionUtil.currentSelection);
             expect(SelectionUtil.currentSelection.hasOwnProperty("selectionText")).to.equal(true);
             done();

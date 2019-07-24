@@ -125,6 +125,8 @@ export class ScholarlyWebAnnotator {
         AnnotationActions.addListenerElement(element);
     }
 
+    /* -------------------------- SELECTION FOR DIFFERENT MEDIA TYPES -------------------------------- */
+
     setSelection(element, selection, mimeType) {
         SelectionUtil.setSelection(element, selection, mimeType);
     }
@@ -155,6 +157,8 @@ export class ScholarlyWebAnnotator {
     setVideoselection(element, interval) {
         SelectionUtil.setVideoSelection(element, interval);
     }
+
+    /* -------------------------- TODO -------------------------------- */
 
     getAnnotations(resourceId) {
         return AnnotationActions.lookupAnnotationsByTarget(resourceId);
