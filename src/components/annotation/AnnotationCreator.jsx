@@ -5,8 +5,6 @@ import TargetCreator from './TargetCreator';
 import BodyCreator from './BodyCreator';
 import FlexModal from '../FlexModal';
 import AnnotationActions from '../../flux/AnnotationActions';
-import $ from 'jquery';
-
 import AppAnnotationStore from '../../flux/AnnotationStore';
 
 class AnnotationCreator extends React.Component {
@@ -14,7 +12,6 @@ class AnnotationCreator extends React.Component {
     constructor(props) {
         super(props);
         this.selectTargets = this.selectTargets.bind(this);
-        this.onHide = this.onHide.bind(this);
         this.state = {
             permission: "private",
             showModal: null,
@@ -30,15 +27,15 @@ class AnnotationCreator extends React.Component {
         AppAnnotationStore.bind('create-annotation', this.createAnnotation.bind(this));
         AppAnnotationStore.bind('edit-annotation', this.editAnnotationBody.bind(this));
     }
+
     setAnnotations(annotations) {
         this.setState({annotations: annotations});
     }
-    onHide() {
-        $('#annotation__modal').modal('hide');//TODO ugly, but without this the static backdrop won't disappear!
-    }
 
     selectTargets() {
+        console.debug('Selecting targets...', this.state.annotations, this.props.config.defaults.target)
         let candidates = AnnotationActions.getCandidates(this.state.annotations, this.props.config.defaults.target);
+        console.debug('this is sure taking a loooong time!')
         this.setState({
             editAnnotation: null,
             candidates: candidates,
@@ -47,14 +44,15 @@ class AnnotationCreator extends React.Component {
             createdBodies: {}
         });
     }
+
     hideAnnotationForm() {
-        $('#annotation__modal').modal('hide');//TODO ugly, but without this the static backdrop won't disappear!
         this.setState({
             showModal: false,
             selectedTargets: [],
             createdBodies: {}
         });
     }
+
     editAnnotationBody(annotation) {
         this.setState({
             editAnnotation: annotation,
@@ -62,25 +60,31 @@ class AnnotationCreator extends React.Component {
             showModal: true, create: "body"
         });
     }
+
     addMotivations() {
         this.setState({showModal: true, create: "body"});
     }
+
     addTargets() {
         this.setState({showModal: true, create: "target"});
     }
+
     setTargets(selectedTargets) {
         this.setState({
             selectedTargets: selectedTargets
         });
     }
+
     setBodies(createdBodies) {
         this.setState({createdBodies: createdBodies});
     }
+
     createAnnotation(annotationTargets) {
         var annotation = AnnotationActions.makeAnnotation(annotationTargets, this.props.currentUser.username);
         annotation.body = this.listBodies(this.state.createdBodies);
         this.editAnnotationBody(annotation);
     }
+
     gatherDataAndSave() {
         let component = this;
         if (this.state.editAnnotation) {
@@ -97,6 +101,7 @@ class AnnotationCreator extends React.Component {
             this.hideAnnotationForm();
         }
     }
+
     handlePermissionChange(event) {
         this.setState({permission: event.target.value});
         AnnotationActions.setPermission(event.target.value);
@@ -130,7 +135,7 @@ class AnnotationCreator extends React.Component {
     }
 
     render() {
-        let targetCreator = (
+        const targetCreator = (
             <TargetCreator
                 selectedTargets={this.state.selectedTargets}
                 addMotivations={this.addMotivations.bind(this)}
@@ -141,7 +146,7 @@ class AnnotationCreator extends React.Component {
                 permission={this.state.permission}
             />
         )
-        let bodyCreator = (
+        const bodyCreator = (
             <BodyCreator
                 createdBodies={this.state.createdBodies}
                 addTargets={this.addTargets.bind(this)}
@@ -149,11 +154,10 @@ class AnnotationCreator extends React.Component {
                 currentUser={this.props.currentUser}
                 annotationTasks={this.props.config.annotationTasks}
                 services={this.props.config.services}
-                hideAnnotationForm={this.onHide.bind(this)}
-                permission={this.state.permission}
+                permission={this.state.permission} //FIXME not used
             />
         )
-        var canSave = this.hasTarget() && this.hasBody();
+        const canSave = this.hasTarget() && this.hasBody();
         let creatorButtons = (
             <div className="row">
                 <div className="creator-view-buttons col-12">
@@ -193,9 +197,11 @@ class AnnotationCreator extends React.Component {
                 </div>
             </div>
         )
+
         let creator = this.state.create === "target" ? targetCreator : bodyCreator;
         let titleLabel = this.state.create === "target" ? "targets" : "content";
         let title = "Add one or more annotation " + titleLabel;
+
         return (
             <div>
                 {this.props.currentUser ?
@@ -203,14 +209,10 @@ class AnnotationCreator extends React.Component {
                     : null
                 }
                 {this.state.showModal ?
-                    <FlexModal
-                        elementId="annotation__modal"
-                        handleHideModal={this.hideAnnotationForm.bind(this)}
-                        confirmLabel="Save"
-                        confirmAction={this.gatherDataAndSave.bind(this)}
-                        title={title}>
+                    <FlexModal elementId="annotation__modal" onClose={this.hideAnnotationForm.bind(this)} title={title}>
                         {creatorButtons}
                         {creator}
+                        <button onClick={this.gatherDataAndSave.bind(this)}>Save</button>
                     </FlexModal>: null
                 }
             </div>

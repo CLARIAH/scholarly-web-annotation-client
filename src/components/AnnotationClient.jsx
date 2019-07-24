@@ -68,9 +68,6 @@ export default class AnnotationClient extends React.Component {
                 config={this.props.config}
             />
         );
-        /*
-        let resourceViewer = null;
-        */
         let resourceViewer = (
             <ResourceViewer
                 currentUser={this.state.user}

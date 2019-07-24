@@ -97,7 +97,7 @@ const RDFaUtil = {
     },
 
     isRDFaIgnoreNode : function(node) {
-        return (node.hasOwnProperty("rdfaIgnorable") && node.rdfaIgnorable);
+        return (node.hasOwnProperty("rdfaIgnorable") && node.rdfaIgnorable);//FIXME ugly check
     },
 
     isSelectWholeNode : function(node) {
@@ -266,6 +266,7 @@ const RDFaUtil = {
         breadcrumb[resourceId] = {id: resourceId};
         while (!rootFound) {
             let resource = RDFaUtil.lookupResource(resourceId, resourceIndex);
+            if(!resource) continue;
             //let source = AnnotationActions.lookupIdentifier(resourceId);
             breadcrumb[resource.rdfaResource].type = resource.rdfTypeLabel;
             RDFaUtil.addBreadcrumb(labelTrail, resource);

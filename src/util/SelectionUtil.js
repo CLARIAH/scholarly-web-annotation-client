@@ -217,15 +217,6 @@ const SelectionUtil = {
         };
     },
 
-    setObserverNodeSelection() {
-        let observerNodes = DOMUtil.getObserverNodes();
-        SelectionUtil.currentSelection = {
-            startNode: observerNodes[0],
-            endNode: observerNodes[observerNodes.length - 1],
-            mimeType: "multipart" // TODO: FIX based on actual content
-        };
-    },
-
     ensureFocusAnchorAreLeafNodes(selection) {
         if (selection.focusNode.nodeType === Node.ELEMENT_NODE) {
             selection.focusNode = selection.focusNode.childNodes[selection.focusOffset];
@@ -257,7 +248,56 @@ const SelectionUtil = {
         }
     },
 
-    setSelectionStartEndNodes(selection) {
+    /* -------------------------------------------- SET/GET THE CURRENT SELECTION ---------------------------------- */
+
+    // Find nodes and offsets corresponding to the selection.
+    // Start node is always before end node in presentation order
+    // regardless of whether selection is done forwards or backwards.
+    getDOMSelection() {
+        if (!SelectionUtil.currentSelection)
+            SelectionUtil.setDOMSelection();
+        return SelectionUtil.currentSelection;
+    },
+
+    //sets the current DOM selection
+    setDOMSelection() {
+        //first get the selection from the overall DOM
+        const selection = document.getSelection ? document.getSelection() : null;
+
+        //if something was selected, use that as the current selection, else use the observer DOME node as a whole?
+        if (!selection || selection.isCollapsed) {
+            SelectionUtil._setObserverNodeSelection();
+            return true;
+        } else {
+            SelectionUtil._setSelectionStartEndNodes(selection);
+        }
+
+        // Set container node of start and end nodes (so defining which parent DOM node encaptulates the selection)
+        SelectionUtil.currentSelection.selectionText = selection ? selection.toString() : null;//TODO or set to ''
+        SelectionUtil._setContainerNode();
+
+        // if end node or parent is an ignorable element, set parent to previous text node
+        const endParent = SelectionUtil.currentSelection.endNode.parentNode;
+        if (RDFaUtil.isRDFaIgnoreNode(endParent)) {
+            const prevNode = DOMUtil.getPreviousTextNode(SelectionUtil.currentSelection.endNode);
+            SelectionUtil.currentSelection.endNode = prevNode;
+            SelectionUtil.currentSelection.endOffset = prevNode.length;
+            //SelectionUtil._adjustSelection(SelectionUtil.currentSelection);
+        }
+        SelectionUtil._setSelectionText();
+    },
+
+    //get the observer DOM node and use that as the current selection
+    _setObserverNodeSelection() {
+        let observerNodes = DOMUtil.getObserverNodes();
+        SelectionUtil.currentSelection = {
+            startNode: observerNodes[0],
+            endNode: observerNodes[observerNodes.length - 1],
+            mimeType: "multipart" // TODO: FIX based on actual content; this will not pass _checkValidTextSelection()!
+        };
+    },
+
+    _setSelectionStartEndNodes(selection) {
         SelectionUtil.ensureFocusAnchorAreLeafNodes(selection);
         SelectionUtil.currentSelection = {
             startNode: selection.anchorNode,
@@ -269,45 +309,18 @@ const SelectionUtil = {
         SelectionUtil.ensureSelectionStartPreceedsEnd();
     },
 
-    setDOMSelection : function() {
-        var selection = null;
-        if (document.getSelection) {
-            selection = document.getSelection();
-        }
-        if (!selection || selection.isCollapsed) {
-            SelectionUtil.setObserverNodeSelection();
-            return true;
-        }
-        else {
-            SelectionUtil.setSelectionStartEndNodes(selection);
-        }
-        // Set container node of start and end nodes
-        SelectionUtil.currentSelection.selectionText = selection.toString();
-        SelectionUtil.setContainerNode();
-        // if end node or parent is an ignorable element, set parent to previous text node
-        let endParent = SelectionUtil.currentSelection.endNode.parentNode;
-        if (RDFaUtil.isRDFaIgnoreNode(endParent)) {
-            let prevNode = DOMUtil.getPreviousTextNode(SelectionUtil.currentSelection.endNode);
-            SelectionUtil.currentSelection.endNode = prevNode;
-            SelectionUtil.currentSelection.endOffset = prevNode.length;
-            //SelectionUtil.adjustSelection(SelectionUtil.currentSelection);
-            //selection = document.getSelection();
-        }
-        SelectionUtil.setSelectionText();
-    },
-
-    setContainerNode() {
-        SelectionUtil.checkValidTextSelection();
-        let currentSelection = SelectionUtil.currentSelection;
-        var ancestors = DOMUtil.findCommonAncestors(currentSelection.startNode, currentSelection.endNode);
+    _setContainerNode() {
+        SelectionUtil._checkValidTextSelection();
+        const currentSelection = SelectionUtil.currentSelection;
+        const ancestors = DOMUtil.findCommonAncestors(currentSelection.startNode, currentSelection.endNode);
         currentSelection.containerNode = ancestors[ancestors.length - 1];
     },
 
-    checkValidTextSelection() {
+    _checkValidTextSelection() {
         if (!SelectionUtil.currentSelection) {
             throw Error("No currentSelection set");
         }
-        let selection = SelectionUtil.currentSelection;
+        const selection = SelectionUtil.currentSelection;
         if (!selection.mimeType) {
             throw Error("No currentSelection mimeType set")
         } else if (selection.mimeType !== "text") {
@@ -330,14 +343,14 @@ const SelectionUtil = {
      *   (trimmed to avoid incorrectly computed leading and trailing whitespace)
      *   - remove text node content from unfiltered selection text if it is an ignore node
      */
-    setSelectionText() {
-        SelectionUtil.checkValidTextSelection();
+    _setSelectionText() {
+        SelectionUtil._checkValidTextSelection();
         if (!SelectionUtil.currentSelection.containerNode) {
-            SelectionUtil.setContainerNode();
+            SelectionUtil._setContainerNode();
         }
         let selection = SelectionUtil.currentSelection;
-        var startOffset = SelectionUtil.getTrimmedOffset(selection.startNode, selection.startOffset);
-        var endOffset = SelectionUtil.getTrimmedOffset(selection.endNode, selection.endOffset);
+        var startOffset = SelectionUtil._getTrimmedOffset(selection.startNode, selection.startOffset);
+        var endOffset = SelectionUtil._getTrimmedOffset(selection.endNode, selection.endOffset);
         let textNodes = RDFaUtil.getRDFaTextNodesExtended(selection.containerNode)
         let ignoreNodes = RDFaUtil.getRDFaIgnoreNodes(selection.containerNode);
         if (ignoreNodes.length === 0)
@@ -382,7 +395,7 @@ const SelectionUtil = {
         selection.selectionText += unfilteredText;
     },
 
-    getTrimmedOffset : function(node, offset) {
+    _getTrimmedOffset : function(node, offset) {
         if (node.nodeType === window.Node.TEXT_NODE && offset > 0) {
             //let textContent = node.textContent;
             if (offset > 0)
@@ -392,14 +405,7 @@ const SelectionUtil = {
         return offset;
     },
 
-    // Find nodes and offsets corresponding to the selection.
-    // Start node is always before end node in presentation order
-    // regardless of whether selection is done forwards or backwards.
-    getCurrentSelection : function() {
-        if (!SelectionUtil.currentSelection)
-            SelectionUtil.setDOMSelection();
-        return SelectionUtil.currentSelection;
-    },
+    /* -------------------------------------------- CHECKING SELECTION RANGE FUNCTIONS? ---------------------------------- */
 
     checkSelectionRange : function() {
         // 1. do nothing if selection is collapsed (e.g. does not span a range)
@@ -407,10 +413,10 @@ const SelectionUtil = {
             return null;
         }
         // 2. get start and end nodes of selection in display order
-        var selection = SelectionUtil.getCurrentSelection();
+        var selection = SelectionUtil.getDOMSelection();
         // 3. if selection start node has SelectWholeElement property
-        let startNode = SelectionUtil.selectWholeElement(selection.startNode);
-        let endNode = SelectionUtil.selectWholeElement(selection.endNode);
+        let startNode = SelectionUtil._selectWholeElement(selection.startNode);
+        let endNode = SelectionUtil._selectWholeElement(selection.endNode);
         if (selection.startOffset !== undefined && startNode) {
             // move selection to start of start node
             selection.startOffset = 0;
@@ -426,11 +432,11 @@ const SelectionUtil = {
         // 5. if start and/or end nodes have SelectWholeElement property,
         // make sure the offsets are set properly
         if (startNode || endNode){
-            SelectionUtil.adjustSelection(selection);
+            SelectionUtil._adjustSelection(selection);
         }
     },
 
-    adjustSelection : (selection) => {
+    _adjustSelection : (selection) => {
         var range = document.createRange();
         range.setStart(selection.startNode, selection.startOffset);
         range.setEnd(selection.endNode, selection.endOffset);
@@ -439,7 +445,7 @@ const SelectionUtil = {
         sel.addRange(range);
     },
 
-    selectWholeElement : function(node) {
+    _selectWholeElement : function(node) {
         let ancestors = DOMUtil.getAncestors(node);
         let nodes = ancestors.concat([node]).reverse();
         for (var index = 0; index < nodes.length; index++) {

@@ -324,6 +324,8 @@ const AnnotationActions = {
     },
 
     getCandidates: (annotations, defaultTargets) => {
+        console.debug('getCandidates()')
+        console.debug(AnnotationStore.resourceData)
         return TargetUtil.getCandidates(annotations, defaultTargets, AnnotationStore.resourceData);
     },
 
