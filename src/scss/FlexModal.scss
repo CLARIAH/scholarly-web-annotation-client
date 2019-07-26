@@ -2,11 +2,11 @@
   z-index: 1;
   background-color: rgba(#333, 0.8);
   display: block;
-  height: 50%;
+  overflow-y: auto;
   left: 20%;
-  top: 20%;
+  top: 15%;
   position: fixed;
-  width: 50%;
+  width: 60%;
 
   .swac__m__container{
     position: relative;

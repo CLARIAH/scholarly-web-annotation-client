@@ -15,26 +15,26 @@ import AppAnnotationStore from './../../flux/AnnotationStore';
 import AnnotationActions from '../../flux/AnnotationActions.js';
 
 export default class AnnotationViewer extends React.Component {
+
     constructor(props) {
         super(props);
         this.state = {
             view: "annotations",
         };
     }
-    componentDidMount() {
-    }
+
     render() {
         return (
-        <div className="annotationViewer">
-            <AnnotationCreator
-                currentUser={this.props.currentUser}
-                config={this.props.config}
-            />
-            <AnnotationList
-                currentUser={this.props.currentUser}
-                config={this.props.config}
-            />
-        </div>
+            <div className="annotationViewer">
+                <AnnotationCreator
+                    currentUser={this.props.currentUser}
+                    config={this.props.config}
+                />
+                <AnnotationList
+                    currentUser={this.props.currentUser}
+                    config={this.props.config}
+                />
+            </div>
         );
     }
 }

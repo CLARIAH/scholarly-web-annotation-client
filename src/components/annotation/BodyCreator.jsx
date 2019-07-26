@@ -1,114 +1,118 @@
+import React from 'react';
+
 import FreetextForm from './FreetextForm';
 import ClassifyingForm from './ClassifyingForm';
 import LinkingForm from './LinkingForm';
-
-import React from 'react';
-
+import IDUtil from '../../util/IDUtil';
 
 class BodyCreator extends React.Component {
 
     constructor(props) {
         super(props);
 
-        let activeTab = null;
+        let activeView = null;
         for(let i=0;i<Object.keys(this.props.annotationTasks).length;i++) {
             if(Object.keys(this.props.annotationTasks)[i] != 'bookmark') {
-                activeTab = Object.keys(this.props.annotationTasks)[i];
+                activeView = Object.keys(this.props.annotationTasks)[i];
                 break;
             }
         }
         this.state = {
-            activeTab : activeTab,
+            activeView : activeView,
             bodies: this.props.createdBodies,
             defaultCollection: null,
         }
     }
 
-	componentDidMount() {
-	}
-
-    closeSelectorModal() {
-        this.setState({showSelectorModal: false});
-    }
-    updateAnnotationBody(annotationMode, value) {
+    updateAnnotationBody = (annotationMode, value) => {
         var bodies = this.state.bodies;
         bodies[annotationMode] = value;
         this.setState({bodies: bodies});
         this.props.setBodies(bodies);
     }
 
+    //FIXME not used at all!
     addTargets() {
         this.props.addTargets();
     }
 
-    render() {
+    selectTab(view) {
+        this.setState({activeView : view})
+    }
+
+    renderTabbedView = (annotationTasks, activeView, updateBodyFunc, services) => {
         //generate the tabs from the configured modes
-        const tabs = Object.keys(this.props.annotationTasks).map(function(mode) {
-            if (mode == 'bookmark') { return null };
+        const tabs = Object.keys(annotationTasks).filter(mode => mode !== 'bookmark').map(mode => {
             return (
-                <li
+                <a
                     key={mode + '__tab_option'}
-                    className="nav-tab"
+                    href={'#' + mode}
+                    aria-current={activeView == mode ? "page" : null}
+                    className={activeView == mode ? 'active' : null}
+                    onClick={this.selectTab.bind(this, mode)}
                 >
-                    <a data-toggle="tab" href={'#' + mode} className={this.state.activeTab == mode ? 'nav-link active' : 'nav-link'}>
-                        {mode}
-                    </a>
-                </li>
-                )
-        }, this)
+                    {mode}
+                </a>
+            )
+        });
 
         //generate the content of each tab (a form based on a annotation mode/motivation)
-        var tabContents = Object.keys(this.props.annotationTasks).map(function(mode) {
-            if (mode == 'bookmark') { return null };
+        const tabContents = Object.keys(annotationTasks).filter(mode => mode !== 'bookmark').map(mode => {
             let form = '';
             switch(mode) {
                 case 'classify' : form = (
                     <ClassifyingForm
                         data={this.state.bodies.classification}
-                        config={this.props.annotationTasks[mode]}
-                        onOutput={this.updateAnnotationBody.bind(this)}
-                        services={this.props.services}
+                        config={annotationTasks[mode]}
+                        onOutput={updateBodyFunc}
+                        services={services}
                     />
                 );
                 break;
                 case 'link' : form = (
                     <LinkingForm
                         data={this.state.bodies.link}
-                        config={this.props.annotationTasks[mode]}
-                        onOutput={this.updateAnnotationBody.bind(this)}
-                        services={this.props.services}
+                        config={annotationTasks[mode]}
+                        onOutput={updateBodyFunc}
+                        services={services}
                     />
                 );
                 break;
                 default : form = (
                     <FreetextForm
-                        data={this.state.bodies[this.props.annotationTasks[mode].type]}
+                        data={this.state.bodies[annotationTasks[mode].type]}
                         config={this.props.annotationTasks[mode]}
-                        onOutput={this.updateAnnotationBody.bind(this)}
+                        onOutput={updateBodyFunc}
                     />
                 );
                 break;
             }
             return (
-                <div
-                    key={mode + '__tab_content'}
-                    id={mode}
-                    className={this.state.activeTab == mode ? 'tab-pane active' : 'tab-pane'}>
-                        {form}
+                <div key={mode + '__tab_content'} style={{display : activeView === mode ? 'block' : 'none'}}>
+                    {form}
                 </div>
-                );
-        }, this);
+            );
+        });
 
         return (
-            <div className="container-fluid">
-                <ul className="nav nav-tabs">
-                    {tabs}
-                </ul>
-                <div className="tab-content">
-                    {tabContents}
-                </div>
-                <div>
-                </div>
+            <div>
+                <div className={IDUtil.cssClassName('submenu')}>{tabs}</div>
+                <div>{tabContents}</div>
+            </div>
+        )
+    }
+
+    render() {
+        const tabbedView = this.renderTabbedView(
+            this.props.annotationTasks, // a tab will be generated for each configured annotation task
+            this.state.activeView, // which tab is active
+            this.updateAnnotationBody, // callback function for saving the annotation body
+            this.props.services // APIs or services passed on to the linking & classifying view
+        );
+
+        return (
+            <div className={IDUtil.cssClassName('body-creator')}>
+                {tabbedView}
             </div>
         )
     }

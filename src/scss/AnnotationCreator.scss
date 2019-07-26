@@ -1,0 +1,15 @@
+.swac__annotation-creator {
+
+	.swac__acl__modal {
+		padding: 20px;
+
+		.swac__acr__buttons {
+			margin: 10px;
+			display: flex;
+			> * {
+				margin-left:5px;
+				color: red;
+			}
+		}
+	}
+}

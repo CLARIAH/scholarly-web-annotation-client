@@ -5,9 +5,11 @@
 @import '_variables';
 @import '_layout';
 
-@import 'permission-switch';
 @import 'editing';
 @import 'annotation-client';
 @import 'LoginBox';
 @import 'FlexModal';
 @import 'AnnotationClient';
+@import 'AnnotationCreator';
+@import 'BodyCreator';
+@import 'TargetCreator';

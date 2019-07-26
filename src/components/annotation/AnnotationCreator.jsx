@@ -6,213 +6,206 @@ import BodyCreator from './BodyCreator';
 import FlexModal from '../FlexModal';
 import AnnotationActions from '../../flux/AnnotationActions';
 import AppAnnotationStore from '../../flux/AnnotationStore';
+import IDUtil from '../../util/IDUtil';
 
 class AnnotationCreator extends React.Component {
 
     constructor(props) {
         super(props);
-        this.selectTargets = this.selectTargets.bind(this);
         this.state = {
             permission: "private",
             showModal: null,
             annotations: [],
             selectedTargets: [],
             createdBodies: {},
-            create: null
+            editor: null
         }
+        this.CLASS_PREFIX = 'acr'
     }
 
     componentDidMount() {
-        AppAnnotationStore.bind('loaded-annotations', this.setAnnotations.bind(this));
-        AppAnnotationStore.bind('create-annotation', this.createAnnotation.bind(this));
-        AppAnnotationStore.bind('edit-annotation', this.editAnnotationBody.bind(this));
+        AppAnnotationStore.bind('loaded-annotations', this.setAnnotations);
+        AppAnnotationStore.bind('create-annotation', this.createAnnotation);
+        AppAnnotationStore.bind('edit-annotation', this.editAnnotationBody);
     }
 
-    setAnnotations(annotations) {
-        this.setState({annotations: annotations});
-    }
+    setAnnotations = annotations => this.setState({annotations: annotations});
 
-    selectTargets() {
-        console.debug('Selecting targets...', this.state.annotations, this.props.config.defaults.target)
-        let candidates = AnnotationActions.getCandidates(this.state.annotations, this.props.config.defaults.target);
-        console.debug('this is sure taking a loooong time!')
-        this.setState({
-            editAnnotation: null,
-            candidates: candidates,
-            showModal: true,
-            create: "target",
-            createdBodies: {}
-        });
-    }
+    createAnnotation = annotationTargets => {
+        let annotation = AnnotationActions.makeAnnotation(annotationTargets, this.props.currentUser.username);
+        annotation.body = this.listBodies(this.state.createdBodies);
+        this.editAnnotationBody(annotation);
+    };
 
-    hideAnnotationForm() {
-        this.setState({
-            showModal: false,
-            selectedTargets: [],
-            createdBodies: {}
-        });
-    }
-
-    editAnnotationBody(annotation) {
+    editAnnotationBody = annotation => {
         this.setState({
             editAnnotation: annotation,
             createdBodies: this.categorizeBodies(annotation.body),
-            showModal: true, create: "body"
+            showModal: true,
+            editor: "body"
         });
-    }
+    };
 
-    addMotivations() {
-        this.setState({showModal: true, create: "body"});
-    }
-
-    addTargets() {
-        this.setState({showModal: true, create: "target"});
-    }
-
-    setTargets(selectedTargets) {
-        this.setState({
-            selectedTargets: selectedTargets
-        });
-    }
-
-    setBodies(createdBodies) {
-        this.setState({createdBodies: createdBodies});
-    }
-
-    createAnnotation(annotationTargets) {
-        var annotation = AnnotationActions.makeAnnotation(annotationTargets, this.props.currentUser.username);
-        annotation.body = this.listBodies(this.state.createdBodies);
-        this.editAnnotationBody(annotation);
-    }
-
-    gatherDataAndSave() {
-        let component = this;
-        if (this.state.editAnnotation) {
-            var annotation = this.state.editAnnotation;
-        } else {
-            var annotation = AnnotationActions.makeAnnotation(this.state.selectedTargets, this.props.currentUser.username);
-        }
-        var bodies = this.listBodies(this.state.createdBodies);
-        if (bodies.length === 0) {
-            alert("Cannot save annotation without content. Please add at least one motivation.");
-        } else {
-            annotation.body = bodies;
-            AnnotationActions.save(annotation);
-            this.hideAnnotationForm();
-        }
-    }
-
-    handlePermissionChange(event) {
-        this.setState({permission: event.target.value});
-        AnnotationActions.setPermission(event.target.value);
-    }
-
-    listBodies(createdBodies) {
-        var bodies = [];
-        Object.keys(createdBodies).forEach((bodyType) => {
-            bodies = bodies.concat(createdBodies[bodyType]);
-        });
-        return bodies;
-    }
-
-    categorizeBodies(bodies) {
-        var createdBodies = {};
+    categorizeBodies = bodies => {
+        const createdBodies = {};
         bodies.forEach((body) => {
             if (!createdBodies[body.type])
                 createdBodies[body.type] = [];
             createdBodies[body.type].push(body);
         });
         return createdBodies;
-    }
+    };
 
-    hasTarget() {
+    /* ------------------------------------- FOR OPENING/CLOSING THE ANNOTATION MODAL --------------------- */
+
+    makeAnnotation = () => {
+        let candidates = AnnotationActions.getCandidates(this.state.annotations, this.props.config.defaults.target);
+        this.setState({
+            editAnnotation: null,
+            candidates: candidates,
+            showModal: true,
+            editor: "target",
+            createdBodies: {}
+        });
+    };
+
+    hideAnnotationModal = () => {
+        this.setState({
+            showModal: false,
+            selectedTargets: [],
+            createdBodies: {}
+        });
+    };
+
+    showBodyEditor = () => {
+        console.debug('body editor selected')
+        this.setState({showModal: true, editor: "body"});
+    };
+
+    showTargetEditor = () => {
+        console.debug('target editor selected')
+        this.setState({showModal: true, editor: "target"});
+    };
+
+    handlePermissionChange = event => {
+        this.setState({permission: event.target.value});
+        AnnotationActions.setPermission(event.target.value);
+    };
+
+    /* ------------------------------------- CALLBACKS FOR THE BODY/TARGET CREATORS ---------------------------- */
+
+    setTargets = selectedTargets => this.setState({selectedTargets: selectedTargets});
+
+    setBodies = createdBodies => this.setState({createdBodies: createdBodies});
+
+    /* ------------------------------------- NOT USED ANYMORE ---------------------------- */
+
+    hasTarget = () => {
         return this.state.selectedTargets.length > 0 || this.state.editAnnotation !== null;
-    }
+    };
 
-    hasBody() {
+    hasBody = () => {
+        return this.listBodies(this.state.createdBodies).length > 0;
+    };
+
+    /* ------------------------------------- FOR SAVING --------------------------------------- */
+
+    gatherDataAndSave = () => {
+        let annotation = null;
+        if (this.state.editAnnotation) {
+            annotation = this.state.editAnnotation;
+        } else {
+            annotation = AnnotationActions.makeAnnotation(this.state.selectedTargets, this.props.currentUser.username);
+        }
         let bodies = this.listBodies(this.state.createdBodies);
-        return bodies.length > 0;
-    }
+        if (bodies.length === 0) {
+            alert("Cannot save annotation without content. Please add at least one motivation.");
+        } else {
+            annotation.body = bodies;
+            AnnotationActions.save(annotation);
+            this.hideAnnotationModal();
+        }
+    };
+
+    listBodies = createdBodies => {
+        const bodies = [];
+        Object.keys(createdBodies).forEach(bodyType => {
+            bodies = bodies.concat(createdBodies[bodyType]);
+        });
+        return bodies;
+    };
+
+    renderButtons = (disableTargetBtn, disableContentBtn, selectedPermission, showTargetEditorFunc, showBodyEditorFunc, changePermissionFunc) => {
+        return (
+            <div className={IDUtil.cssClassName('buttons', this.CLASS_PREFIX)}>
+                <button className={IDUtil.cssClassName('btn blank')} disabled={disableTargetBtn} onClick={showTargetEditorFunc}>
+                    Show targets
+                </button>
+                <button className={IDUtil.cssClassName('btn blank')} disabled={disableContentBtn} onClick={showBodyEditorFunc}>
+                    Show content
+                </button>
+                <div className={IDUtil.cssClassName('radio-group')}>
+                    <input type="radio" value="private" checked={selectedPermission === "private"} onChange={changePermissionFunc}/>
+                    <label>Private</label>
+                    <input type="radio" value="public" checked={selectedPermission === "public"} onChange={changePermissionFunc}/>
+                    <label>Public</label>
+                </div>
+            </div>
+        )
+    };
 
     render() {
-        const targetCreator = (
+        const buttonPanel = this.renderButtons(
+            !this.state.candidates, //disable target btn y/n
+            this.state.selectedTargets.length === 0, //disable content btn y/n
+            this.state.permission,
+            this.showTargetEditor,
+            this.showBodyEditor,
+            this.handlePermissionChange
+        );
+
+        const targetEditor = (
             <TargetCreator
                 selectedTargets={this.state.selectedTargets}
-                addMotivations={this.addMotivations.bind(this)}
-                setTargets={this.setTargets.bind(this)}
+                //addMotivations={this.addMotivations}
+                setTargets={this.setTargets}
                 candidates={this.state.candidates}
                 annotations={this.state.annotations}
                 defaultTargets={this.props.config.defaults.target}
                 permission={this.state.permission}
             />
         )
-        const bodyCreator = (
+
+        const bodyEditor = (
             <BodyCreator
                 createdBodies={this.state.createdBodies}
-                addTargets={this.addTargets.bind(this)}
-                setBodies={this.setBodies.bind(this)}
+                //addTargets={this.addTargets}
+                setBodies={this.setBodies}
                 currentUser={this.props.currentUser}
                 annotationTasks={this.props.config.annotationTasks}
                 services={this.props.config.services}
                 permission={this.state.permission} //FIXME not used
             />
         )
-        const canSave = this.hasTarget() && this.hasBody();
-        let creatorButtons = (
-            <div className="row">
-                <div className="creator-view-buttons col-12">
-                    <button
-                        className="btn btn-primary"
-                        disabled={!this.state.candidates}
-                        onClick={this.addTargets.bind(this)}>
-                        Show targets
-                    </button>
-                    {' '}
-                    <button
-                        className="btn btn-primary"
-                        disabled={this.state.selectedTargets.length === 0}
-                        onClick={this.addMotivations.bind(this)}>
-                        Show content
-                    </button>
-                    <div className="permission-switch ">
-                        <label>Private</label>
-                        {' '}
-                        <input
-                            type="radio"
-                            value="private"
-                            checked={this.state.permission === "private"}
-                            onChange={this.handlePermissionChange.bind(this)}
-                        />
-                        &nbsp;
-                        &nbsp;
-                        <input
-                            type="radio"
-                            value="public"
-                            checked={this.state.permission === "public"}
-                            onChange={this.handlePermissionChange.bind(this)}
-                        />
-                        {' '}
-                        <label>Public</label>
-                    </div>
-                </div>
-            </div>
-        )
 
-        let creator = this.state.create === "target" ? targetCreator : bodyCreator;
-        let titleLabel = this.state.create === "target" ? "targets" : "content";
-        let title = "Add one or more annotation " + titleLabel;
-
+        const editor = this.state.editor === "target" ? targetEditor : bodyEditor;
+        const makeAnnotationBtn = this.props.currentUser ?
+            <button className={IDUtil.cssClassName('btn')} onClick={this.makeAnnotation}>Make annotation</button> :
+            null
         return (
-            <div>
-                {this.props.currentUser ?
-                    <button className="btn btn-light" onClick={this.selectTargets.bind(this)}>Make annotation</button>
-                    : null
-                }
+            <div className={IDUtil.cssClassName('annotation-creator')}>
+                {makeAnnotationBtn}
                 {this.state.showModal ?
-                    <FlexModal elementId="annotation__modal" onClose={this.hideAnnotationForm.bind(this)} title={title}>
-                        {creatorButtons}
-                        {creator}
-                        <button onClick={this.gatherDataAndSave.bind(this)}>Save</button>
+                    <FlexModal
+                        elementId="annotation__modal"
+                        onClose={this.hideAnnotationModal}
+                        title={"Add one or more annotation to: " + (this.state.editor === "target" ? "targets" : "content")}
+                    >
+                        <div className={IDUtil.cssClassName('modal', this.CLASS_PREFIX)}>
+                            {buttonPanel}
+                            {editor}
+                            <button onClick={this.gatherDataAndSave}>Save</button>
+                        </div>
                     </FlexModal>: null
                 }
             </div>

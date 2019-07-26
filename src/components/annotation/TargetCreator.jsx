@@ -1,11 +1,12 @@
-
 'use strict'
 
 import React from 'react';
 import CandidateList from './CandidateList.jsx';
 import SelectedList from './SelectedList.jsx';
+import IDUtil from '../../util/IDUtil';
 
 export default class TargetCreator extends React.Component {
+
     constructor(props) {
         super(props);
         this.addToSelected = this.addToSelected.bind(this);
@@ -17,15 +18,17 @@ export default class TargetCreator extends React.Component {
             candidateTypes: ["resource", "external", "annotation"],
         };
     }
-    addToSelected(candidate) {
+
+    addToSelected = candidate => {
         var selected = this.state.selected;
         if (selected.indexOf(candidate) === -1) {
             selected.push(candidate);
             this.setState({selected: selected});
             this.props.setTargets(selected);
         }
-    }
-    removeFromSelected(candidate) {
+    };
+
+    removeFromSelected = candidate => {
         var selected = this.state.selected;
         var index = selected.indexOf(candidate);
         if (index !== -1) {
@@ -33,75 +36,72 @@ export default class TargetCreator extends React.Component {
             this.setState({selected: selected});
             this.props.setTargets(selected);
         }
+    };
+
+    //FIXME this is never used!
+    addMotivations = () => {
+        this.props.addMotivations();
+    };
+
+    selectTab(view) {
+        this.setState({activeType : view})
     }
 
-    addMotivations() {
-        this.props.addMotivations();
-    }
+    renderTabbedViews = (candidateTypes, activeType, candidates, selectFunc) => {
+        const tabs = candidateTypes.map(candidateType => {
+            return (
+                <a
+                    key={candidateType + '__tab_option'}
+                    href={'#' + candidateType}
+                    aria-current={activeType === candidateType ? "page" : null}
+                    className={activeType === candidateType ? 'active' : null}
+                    onClick={this.selectTab.bind(this, candidateType)}
+                >
+                    {candidateType}
+                </a>
+            )
+        })
+
+        const tabContents = candidateTypes.map(candidateType => {
+            return (
+                <div key={candidateType + '__tab_content'} style={{display : activeType === candidateType ? 'block' : 'none'}}>
+                    <CandidateList
+                        candidates={candidates[candidateType]}
+                        addToSelected={selectFunc}
+                        candidateType={candidateType}
+                    />
+                </div>
+            );
+        });
+
+        return (
+            <div>
+                <div className={IDUtil.cssClassName('submenu')}>{tabs}</div>
+                <div>{tabContents}</div>
+            </div>
+        )
+    };
 
     render() {
         //generate the tabs from the configured modes
-        var component = this;
-        const tabs = this.state.candidateTypes.map((candidateType) => {
-            return (
-                <li
-                    key={candidateType + '__tab_option'}
-                    className="nav-item"
-                >
-                    <a data-toggle="tab" href={'#' + candidateType}
-                        className={component.state.activeType === candidateType ? 'nav-link active' : 'nav-link'}>
-                        {candidateType}
-                    </a>
-                </li>
-                )
-        }, this)
-
-        var tabContents = this.state.candidateTypes.map((candidateType) => {
-            var candidates = this.props.candidates[candidateType];
-            let tabActive = this.state.activeType === candidateType ? 'tab-pane active' : 'tab-pane';
-            let className = "candidate-target-list " + tabActive;
-            return (
-                <div
-                    key={candidateType + '__tab_content'}
-                    id={candidateType}
-                    className={className}
-                >
-                        <CandidateList
-                            candidates={candidates}
-                            addToSelected={this.addToSelected.bind(this)}
-                            candidateType={candidateType}
-                        />
-                </div>
-            );
-        }, this);
+        const tabbedViews = this.renderTabbedViews(
+            this.state.candidateTypes,
+            this.state.activeType,
+            this.props.candidates,
+            this.addToSelected
+        );
 
         return (
-            <div className="container-fluid">
-                <div className="row">
-                    <div className="col-6">
-                        <div>
-                            <h3>Available Targets</h3>
-                            <span>Click on a target to select it.</span>
-                        </div>
-                        <ul className="nav nav-tabs">
-                            {tabs}
-                        </ul>
-                        <div className="tab-content">
-                            {tabContents}
-                        </div>
-                    </div>
-                    <div className="col-6">
-                        <div>
-                            <h3>Selected Targets</h3>
-                            <span>Click on a selected target to deselect it.</span>
-                        </div>
-                        <SelectedList
-                            candidates={this.state.selected}
-                            removeFromSelected={this.removeFromSelected.bind(this)}
-                        />
-                    </div>
+            <div className={IDUtil.cssClassName('target-creator')}>
+                <div>
+                    <h3>Available Targets</h3>
+                    <span>Click on a target to select it.</span>
+                    {tabbedViews}
                 </div>
                 <div>
+                    <h3>Selected Targets</h3>
+                    <span>Click on a selected target to deselect it.</span>
+                    <SelectedList candidates={this.state.selected} removeFromSelected={this.removeFromSelected}/>
                 </div>
             </div>
         )

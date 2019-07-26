@@ -70,7 +70,7 @@ export default class AnnotationClient extends React.Component {
     renderTabbedViews = (currentView, user, config) => {
         let itemTypes = ["annotations", "collections", "resources"];
 
-        const viewerTabs = itemTypes.map((itemType) => {
+        const tabs = itemTypes.map(itemType => {
             return (
                 <a
                     key={itemType + '__tab_option'}
@@ -85,7 +85,7 @@ export default class AnnotationClient extends React.Component {
         });
 
         let viewer = null;
-        const viewerTabContents = itemTypes.map((itemType) => {
+        const tabContents = itemTypes.map(itemType => {
             if (itemType === "annotations")
                 viewer = <AnnotationViewer currentUser={user} config={config}/>;
             if (itemType === "collections")
@@ -93,10 +93,7 @@ export default class AnnotationClient extends React.Component {
             if (itemType === "resources")
                 viewer = <ResourceViewer currentUser={user} config={config}/>;
             return (
-                <div
-                    key={itemType + '__tab_content'}
-                    id={itemType}
-                    style={{display : currentView === itemType ? 'block' : 'none'}}>
+                <div key={itemType + '__tab_content'} style={{display : currentView === itemType ? 'block' : 'none'}}>
                     {viewer}
                 </div>
             )
@@ -104,8 +101,8 @@ export default class AnnotationClient extends React.Component {
 
         return (
             <div>
-                <div className={IDUtil.cssClassName('submenu')}>{viewerTabs}</div>
-                <div>{viewerTabContents}</div>
+                <div className={IDUtil.cssClassName('submenu')}>{tabs}</div>
+                <div>{tabContents}</div>
             </div>
         )
     };
