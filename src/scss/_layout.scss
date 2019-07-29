@@ -178,6 +178,28 @@
   box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #441313 0 -1px 9px, rgba(255, 0, 0, 0.5) 0 2px 12px;
 }
 
+/* badges for different types/categories */
+
+.swac__badge {
+  &.default {
+    @include badge(white, $clDark);
+  }
+
+  &.resource {
+    @include badge(white, dodgerblue);
+  }
+
+  &.external-resource {
+    @include badge(white, crimson);
+  }
+
+  &.annotation {
+    @include badge(white, goldenrod);
+  }
+}
+
+/* for simple radio button group */
+
 .swac__radio-group {
   display: inline-block;
   > * {

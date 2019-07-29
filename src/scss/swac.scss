@@ -3,8 +3,8 @@
 @import '_images';
 @import '_fonts';
 @import '_variables';
-@import '_layout';
 @import '_mixins';
+@import '_layout';
 
 @import 'editing';
 @import 'annotation-client';
@@ -15,4 +15,6 @@
 @import 'BodyCreator';
 @import 'CandidateList';
 @import 'CandidateTarget';
+@import 'Resource';
+@import 'ResourceList';
 @import 'TargetCreator';

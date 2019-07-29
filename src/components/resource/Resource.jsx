@@ -3,72 +3,49 @@
 import React from 'react';
 import AppAnnotationStore from './../../flux/AnnotationStore';
 import AnnotationActions from './../../flux/AnnotationActions';
+import IDUtil from '../../util/IDUtil';
 
-export default class Resource extends React.Component {
+export default class Resource extends React.PureComponent {
+
     constructor(props) {
         super(props);
-        this.state = {
-        }
-    }
-    componentDidMount() {
     }
 
-    onMouseOverHandler() {
+    onMouseOverHandler = () => {
         if (this.props.data.domNode) {
             this.props.data.domNode.style.border = "1px solid red";
         }
-        //console.log(this.props.data);
     }
 
-    onMouseOutHandler() {
+    onMouseOutHandler = () => {
         if (this.props.data.domNode) {
             this.props.data.domNode.style.border = "";
         }
     }
 
     render() {
-        let component = this;
-        //console.log("Resource - render props.data:", this.props.data);
-        //console.log(Date());
-        let labels = this.props
-        let typeLabels = this.props.data.rdfTypeLabel.map((label) => {
+        const typeLabels = this.props.data.rdfTypeLabel.map(label => {
             if (!this.props.data.rdfTypeLabel) {
                 return (<span key={this.props.data.resource}></span>)
             }
             return (
-                <span
-                    key={"rdfa-label-" + label}
-                >
-                    <span
-                        className="badge badge-info"
-                    >
-                        {label}
-                    </span>&nbsp;
+                <span key={"rdfa-label-" + label} className={IDUtil.cssClassName('badge default')}>
+                    {label}
                 </span>
             )
         })
 
-        let resource = (this.props.data.resource) ? this.props.data.resource : this.props.data.rdfaResource;
-        let parentResource = this.props.data.parentResource;
-        let parent = parentResource ? (<div>Parent: &nbsp; {parentResource}</div>) : "";
-        var rdfaProperty = this.props.data.rdfaProperty ? this.props.data.rdfaProperty.split("#")[1] : null;
+        const resource = this.props.data.resource ? this.props.data.resource : this.props.data.rdfaResource;
+        const parent = this.props.data.parentResource ? (<div>Parent: &nbsp; {this.props.data.parentResource}</div>) : "";
+        let rdfaProperty = this.props.data.rdfaProperty ? this.props.data.rdfaProperty.split("#")[1] : null;
         if (this.props.data.relation) {
             rdfaProperty = this.props.data.relation.split("#")[1];
         }
-        let relation = rdfaProperty ? (<div>Relation: &nbsp; {rdfaProperty}</div>) : "";
+        const relation = rdfaProperty ? (<div>Relation: &nbsp; {rdfaProperty}</div>) : "";
 
         return (
-            <div
-                className="resource list-group-item"
-                onMouseOver={component.onMouseOverHandler.bind(this)}
-                onMouseOut={component.onMouseOutHandler.bind(this)}
-            >
-                <div>
-                Type: &nbsp; {typeLabels}
-                </div>
-                <div>
-                Identifier: {resource}
-                </div>
+            <div className={IDUtil.cssClassName('resource')} onMouseOver={this.onMouseOverHandler} onMouseOut={this.onMouseOutHandler}>
+                {typeLabels}&nbsp;{resource}
                 {parent}
                 {relation}
             </div>

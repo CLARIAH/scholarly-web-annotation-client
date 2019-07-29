@@ -249,25 +249,6 @@ const AnnotationActions = {
         });
     },
 
-    indexResources: () => {
-        return new Promise((resolve, reject) => {
-            FRBRooUtil.indexResources().then((resourceData) => {
-                console.debug('done indexing', resourceData)
-                AnnotationStore.resourceIndex = resourceData.resourceIndex.resources;
-                AnnotationStore.relationIndex = resourceData.resourceIndex.relations;
-                AnnotationStore.resourceStore = resourceData.resourceStore;
-                AnnotationStore.representedResourceMap = resourceData.representedResourceMap;
-                AnnotationStore.externalResourceIndex = resourceData.externalResourceIndex;
-                AnnotationStore.resourceData = resourceData;
-                return resolve();
-            }, (error) => {
-                console.log("Error indexing resources");
-                console.log(error);
-                return reject(error);
-            }); // ... refresh index
-        });
-    },
-
     hasExternalResource(resourceId) {
         if (!AnnotationStore.externalResourceIndex) {
             return false;
@@ -314,9 +295,11 @@ const AnnotationActions = {
         }
     },
 
+    /* ---------------------------- LOADING AND INDEXING THE RESOURCES ON THE PAGE ---------------------- */
+
     loadResources: () => {
         AnnotationStore.topResources = RDFaUtil.getTopRDFaResources();
-        AnnotationActions.indexResources().then(() => {
+        AnnotationActions._indexResources().then(() => {
             AppDispatcher.dispatch({
                 eventName: "loaded-resources",
                 topResources: AnnotationStore.topResources,
@@ -325,10 +308,31 @@ const AnnotationActions = {
         });
     },
 
+    _indexResources: () => {
+        return new Promise((resolve, reject) => {
+            FRBRooUtil.indexResources().then((resourceData) => {
+                console.debug('done indexing', resourceData)
+                AnnotationStore.resourceIndex = resourceData.resourceIndex.resources;
+                AnnotationStore.relationIndex = resourceData.resourceIndex.relations;
+                AnnotationStore.resourceStore = resourceData.resourceStore;
+                AnnotationStore.representedResourceMap = resourceData.representedResourceMap;
+                AnnotationStore.externalResourceIndex = resourceData.externalResourceIndex;
+                AnnotationStore.resourceData = resourceData;
+                return resolve();
+            }, (error) => {
+                console.log("Error indexing resources");
+                console.log(error);
+                return reject(error);
+            }); // ... refresh index
+        });
+    },
+
     getCandidates: (annotations, defaultTargets) => {
         console.debug(AnnotationStore.resourceData)
         return TargetUtil.getCandidates(annotations, defaultTargets, AnnotationStore.resourceData);
     },
+
+    /* ---------------------------- USER FUNCTIONS ---------------------- */
 
     registerUser : function(userDetails) {
         AnnotationAPI.registerUser(userDetails, (error) => {
@@ -354,6 +358,7 @@ const AnnotationActions = {
                     userDetails: error
                 });
             } else {
+                console.debug('loading via login user...')
                 AnnotationActions.loadResources();
                 AppDispatcher.dispatch({
                     eventName: "login-succeeded",
@@ -375,6 +380,8 @@ const AnnotationActions = {
             });
         });
     },
+
+    /* ---------------------------- OTHER FUNCTIONS TODO: CATEGORISE ---------------------- */
 
     registerResources : function(maps) {
         if (Object.keys(maps).length === 0)

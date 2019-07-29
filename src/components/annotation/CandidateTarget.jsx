@@ -13,15 +13,15 @@ export default class CandidateTarget extends React.Component {
     handleClick = () => this.props.onClick(this.props.candidate);
 
     render() {
-        let badgeClass = IDUtil.cssClassName('resource', this.CLASS_PREFIX);
+        let badgeClass = IDUtil.cssClassName('badge resource');
         let targetType = "Resource";
         if (this.props.candidate.type === "external") {
-            badgeClass = IDUtil.cssClassName('external', this.CLASS_PREFIX);
+            badgeClass = IDUtil.cssClassName('badge external-resource');
         }
         // TO DO: deal with elements that have multiple types
         let text = "";
         if (this.props.candidate.type === "annotation") {
-            badgeClass = IDUtil.cssClassName('annotation', this.CLASS_PREFIX);
+            badgeClass = IDUtil.cssClassName('badge annotation');
             targetType = "Annotation";
             text = this.props.candidate.params.text;
         } else if (this.props.candidate.mimeType === "text") {
@@ -40,7 +40,7 @@ export default class CandidateTarget extends React.Component {
             <div className={IDUtil.cssClassName('candidate-target')} onClick={this.handleClick}>
                 {this.props.candidate.source}
                 <span className={badgeClass}>{this.props.candidate.label}</span>
-                <span className={IDUtil.cssClassName('target-type',this.CLASS_PREFIX)}>{targetType}</span>
+                <span className={IDUtil.cssClassName('badge default')}>{targetType}</span>
 
                 <p>{text}</p>
             </div>

@@ -54,8 +54,10 @@ export class ScholarlyWebAnnotator {
         this.topResources = RDFaUtil.getTopRDFaResources();
         AnnotationActions.pollServer();
         if (localStorage.userDetails) {
+            console.debug('user info in local storage')
             AnnotationActions.loginUser(JSON.parse(localStorage.userDetails));
         } else {
+            console.debug('no user info in local storage')
             AnnotationActions.loadResources();
         }
     }

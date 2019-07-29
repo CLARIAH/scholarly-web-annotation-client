@@ -260,7 +260,6 @@ const RDFaUtil = {
     },
 
     createBreadcrumbTrail(resourceId, resourceIndex) {
-        console.debug('creating a breadcrumb trail')
         var rootFound = false;
         var breadcrumb = {};
         var labelTrail = [];
@@ -287,7 +286,6 @@ const RDFaUtil = {
     },
 
     _lookupResource : (resourceId, resourceIndex) => {
-        console.debug('looking up the resource in the index', resourceId, resourceIndex)
         if (!resourceIndex) {
             throw Error("No RDFa resources indexed. Run RDFaUtil.indexRDFa to access RDFa resources.");
         }

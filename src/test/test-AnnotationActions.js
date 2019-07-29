@@ -191,7 +191,7 @@ describe("AnnotationActions", () => {
     let transcriptResource = "urn:vangogh/letter=001:repr=transcript";
     let resources = [originalResource, transcriptResource];
 
-    describe("indexResources", (done) => {
+    describe("_indexResources", (done) => {
 
         beforeEach((done) => {
             AnnotationActions.setBaseAnnotationOntology(baseAnnotationOntologyURL);
@@ -209,14 +209,14 @@ describe("AnnotationActions", () => {
         })
 
         it("should index letter representation", (done) => {
-            //var promise = AnnotationActions.indexResources();
-            AnnotationActions.indexResources().then((index) => {
+            //var promise = AnnotationActions._indexResources();
+            AnnotationActions._indexResources().then((index) => {
                 expect(Object.keys(AnnotationStore.resourceIndex).length).to.equal(2);
                 expect(AnnotationStore.resourceIndex.hasOwnProperty(originalResource)).to.equal(true);
                 done();
             });
             /*
-            AnnotationActions.indexResources((error) => {
+            AnnotationActions._indexResources((error) => {
                 expect(Object.keys(AnnotationStore.resourceIndex).length).to.equal(2);
                 expect(AnnotationStore.resourceIndex.hasOwnProperty(originalResource)).to.equal(true);
                 done();
@@ -251,7 +251,7 @@ describe("AnnotationActions", () => {
 
         it("should return true if resource has represented abstract resource", (done) => {
             loadRDFaPage();
-            AnnotationActions.indexResources().then(() => {
+            AnnotationActions._indexResources().then(() => {
                 let hasExternalResource = AnnotationActions.hasExternalResource(originalResource);
                 expect(hasExternalResource).to.equal(true);
                 done();
@@ -286,7 +286,7 @@ describe("AnnotationActions", () => {
 
         it("should return external resource object if resource has represented abstract resource", (done) => {
             loadRDFaPage();
-            AnnotationActions.indexResources().then(() => {
+            AnnotationActions._indexResources().then(() => {
                 let externalResources = AnnotationActions.getExternalResource(originalResource);
                 expect(typeof externalResources).to.equal("object");
                 done();
@@ -295,7 +295,7 @@ describe("AnnotationActions", () => {
 
         it("should return object with relation property if resource has represented abstract resource", (done) => {
             loadRDFaPage();
-            AnnotationActions.indexResources().then(() => {
+            AnnotationActions._indexResources().then(() => {
                 let externalResources = AnnotationActions.getExternalResource(originalResource);
                 expect(externalResources.hasOwnProperty("relation")).to.equal(true);
                 done();
