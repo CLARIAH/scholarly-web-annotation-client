@@ -14,7 +14,7 @@ export default class SelectedList extends React.Component {
 
     render() {
         const selectedTargets = this.props.candidates.map(
-            candidate => <CandidateTarget onClick={this.removeTarget} key={'__sel__' + candidate.source} candidate={candidate}/>
+            candidate => <li><CandidateTarget onClick={this.removeTarget} key={'__sel__' + candidate.source} candidate={candidate}/></li>
         );
         return (
             <div className="selectedList">

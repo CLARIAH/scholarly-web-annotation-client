@@ -1,11 +1,14 @@
 .swac__annotation-creator {
 
-	.swac__acl__modal {
-		padding: 20px;
+	.swac__acr__modal {
 
 		.swac__acr__buttons {
-			margin: 10px;
-			display: flex;
+
+		}
+
+		#save_btn {
+			float:right;
+			margin-right:10px;
 		}
 	}
 }

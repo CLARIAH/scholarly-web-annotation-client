@@ -110,7 +110,8 @@ class AnnotationCreator extends React.Component {
 
     /* ------------------------------------- FOR SAVING --------------------------------------- */
 
-    gatherDataAndSave = () => {
+    gatherDataAndSave = e => {
+        e.preventDefault();
         let annotation = null;
         if (this.state.editAnnotation) {
             annotation = this.state.editAnnotation;
@@ -204,7 +205,7 @@ class AnnotationCreator extends React.Component {
                         <div className={IDUtil.cssClassName('modal', this.CLASS_PREFIX)}>
                             {buttonPanel}
                             {editor}
-                            <button onClick={this.gatherDataAndSave}>Save</button>
+                            <button id="save_btn" className={IDUtil.cssClassName('btn')} onClick={this.gatherDataAndSave}>Save</button>
                         </div>
                     </FlexModal>: null
                 }
