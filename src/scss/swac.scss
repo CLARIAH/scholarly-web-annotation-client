@@ -8,13 +8,17 @@
 
 @import 'editing';
 @import 'annotation-client';
-@import 'LoginBox';
-@import 'FlexModal';
+
+
+@import 'Annotation';
 @import 'AnnotationClient';
 @import 'AnnotationCreator';
+@import 'AnnotationList';
 @import 'BodyCreator';
 @import 'CandidateList';
 @import 'CandidateTarget';
+@import 'FlexModal';
+@import 'LoginBox';
 @import 'Resource';
 @import 'ResourceList';
 @import 'TargetCreator';

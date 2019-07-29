@@ -328,7 +328,6 @@ const AnnotationActions = {
     },
 
     getCandidates: (annotations, defaultTargets) => {
-        console.debug(AnnotationStore.resourceData)
         return TargetUtil.getCandidates(annotations, defaultTargets, AnnotationStore.resourceData);
     },
 
@@ -358,7 +357,6 @@ const AnnotationActions = {
                     userDetails: error
                 });
             } else {
-                console.debug('loading via login user...')
                 AnnotationActions.loadResources();
                 AppDispatcher.dispatch({
                     eventName: "login-succeeded",

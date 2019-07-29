@@ -3,10 +3,11 @@
 import React from 'react';
 import AppAnnotationStore from './../../flux/AnnotationStore';
 import AnnotationActions from './../../flux/AnnotationActions';
-import Annotation from './Annotation.jsx';
-import $ from 'jquery';
+import Annotation from './Annotation';
+import IDUtil from '../../util/IDUtil';
 
 class AnnotationList extends React.Component {
+
     constructor(props) {
         super(props);
         this.state = {
@@ -26,31 +27,17 @@ class AnnotationList extends React.Component {
     }
 
     setAnnotations(annotations) {
-        console.debug('got these annotations back', annotations)
         this.setState({annotations: annotations});
     }
 
     render() {
-        var annotationItems = null;
-        let component = this;
-        if (this.state.annotations) {
-            annotationItems = this.state.annotations.map(function(annotation) {
-                return (
-                    <Annotation
-                        annotation={annotation}
-                        key={annotation.id}
-                        currentUser={component.props.currentUser}
-                    />
-                );
-            });
-        }
-        $(() => {
-            $("[data-toggle=popover]").popover();
-        })
+        const annotationItems = this.state.annotations ? this.state.annotations.map(
+            annotation => <li key={annotation.id}><Annotation annotation={annotation} currentUser={this.props.currentUser}/></li>
+        ) : null;
         return (
-            <div className="annotationList">
-                <h3>Stored Annotations</h3>
-                <ul>
+            <div className={IDUtil.cssClassName('annotation-list')}>
+                <label className={IDUtil.cssClassName('block-title')}>Stored Annotations</label>
+                <ul className={IDUtil.cssClassName('item-list')}>
                     {annotationItems}
                 </ul>
             </div>

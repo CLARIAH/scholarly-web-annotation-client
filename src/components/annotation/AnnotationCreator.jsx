@@ -38,6 +38,7 @@ class AnnotationCreator extends React.Component {
     };
 
     editAnnotationBody = annotation => {
+        console.debug(annotation)
         this.setState({
             editAnnotation: annotation,
             createdBodies: this.categorizeBodies(annotation.body),

@@ -196,6 +196,26 @@
   &.annotation {
     @include badge(white, goldenrod);
   }
+
+  &.body-commenting {
+    @include badge(white, pink);
+  }
+
+  &.body-classifying {
+    @include badge(white, darkseagreen);
+  }
+
+  &.body-tagging {
+    @include badge(white, deepskyblue);
+  }
+
+  &.body-linking {
+    @include badge(white, orangered);
+  }
+
+  &.body-correcting {
+    @include badge(white, chocolate);
+  }
 }
 
 /* for simple radio button group */
