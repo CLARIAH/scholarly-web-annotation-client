@@ -287,6 +287,7 @@ const RDFaUtil = {
     },
 
     _lookupResource : (resourceId, resourceIndex) => {
+        console.debug('looking up the resource in the index', resourceId, resourceIndex)
         if (!resourceIndex) {
             throw Error("No RDFa resources indexed. Run RDFaUtil.indexRDFa to access RDFa resources.");
         }

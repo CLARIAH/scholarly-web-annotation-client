@@ -200,6 +200,7 @@ const AnnotationActions = {
         let externalIds = externalResources.map((res) => { return res.parentResource }).filter((externalId) => { return typeof externalId === "string"});
 
         resourceIds = resourceIds.concat(externalIds);
+        console.debug('fetching annotations for: ', resourceIds)
         AnnotationAPI.getAnnotationsByTargets(resourceIds, AnnotationActions.accessStatus, (error, annotations) => {
             if (error) {
                 throw error;
@@ -251,6 +252,7 @@ const AnnotationActions = {
     indexResources: () => {
         return new Promise((resolve, reject) => {
             FRBRooUtil.indexResources().then((resourceData) => {
+                console.debug('done indexing', resourceData)
                 AnnotationStore.resourceIndex = resourceData.resourceIndex.resources;
                 AnnotationStore.relationIndex = resourceData.resourceIndex.relations;
                 AnnotationStore.resourceStore = resourceData.resourceStore;

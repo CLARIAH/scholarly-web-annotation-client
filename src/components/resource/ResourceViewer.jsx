@@ -14,14 +14,14 @@ import AppAnnotationStore from './../../flux/AnnotationStore';
 import AnnotationActions from '../../flux/AnnotationActions.js';
 
 export default class ResourceViewer extends React.Component {
+
     constructor(props) {
         super(props);
         this.state = {
             resources: []
         };
     }
-    componentDidMount() {
-    }
+
     render() {
         return (
         <div className="resourceViewer">

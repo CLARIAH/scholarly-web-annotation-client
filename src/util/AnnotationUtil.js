@@ -11,6 +11,7 @@ const AnnotationUtil = {
 
     //called from components that want to create a new annotation with a proper target
     generateW3CAnnotation : function(annotationTargets, creator) {
+        console.debug(annotationTargets)
         if (!AnnotationUtil.hasTargets(annotationTargets))
             throw new Error("Annotation requires a non-empty array of annotation targets.");
         if (creator === undefined)
@@ -140,6 +141,7 @@ const AnnotationUtil = {
     *************************************************************************************/
 
     makeSelector : function(params, targetType) {
+        console.debug(params)
         if (params.breadcrumbs !== undefined) {
             var selector = AnnotationUtil.makeNestedPIDSelector(params.breadcrumbs);
             if (targetType)

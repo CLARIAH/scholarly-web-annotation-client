@@ -13,18 +13,23 @@ class AnnotationList extends React.Component {
             annotations: [],
         }
     }
+
     componentDidMount() {
         AppAnnotationStore.bind('loaded-annotations', this.setAnnotations.bind(this));
         AppAnnotationStore.bind('load-annotations', this.loadAnnotations.bind(this));
         AppAnnotationStore.bind('changed-target', this.loadAnnotations.bind(this));
         AppAnnotationStore.bind('deleted-annotation', this.loadAnnotations.bind(this));
     }
+
     loadAnnotations() {
         AnnotationActions.loadAnnotations();
     }
+
     setAnnotations(annotations) {
+        console.debug('got these annotations back', annotations)
         this.setState({annotations: annotations});
     }
+
     render() {
         var annotationItems = null;
         let component = this;

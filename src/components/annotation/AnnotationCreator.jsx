@@ -123,13 +123,14 @@ class AnnotationCreator extends React.Component {
             alert("Cannot save annotation without content. Please add at least one motivation.");
         } else {
             annotation.body = bodies;
+            console.debug('saving this ole thang', annotation);
             AnnotationActions.save(annotation);
             this.hideAnnotationModal();
         }
     };
 
     listBodies = createdBodies => {
-        const bodies = [];
+        let bodies = [];
         Object.keys(createdBodies).forEach(bodyType => {
             bodies = bodies.concat(createdBodies[bodyType]);
         });
