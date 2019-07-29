@@ -1,0 +1,29 @@
+.swac__candidate-target {
+
+	border: 1px solid $clGreyTint;
+	padding:10px;
+	> * {
+		margin-left:10px;
+	}
+
+	.swac__ct__target-type {
+		@include badge(white, $clDark);
+	}
+
+	.swac__ct__resource {
+		@include badge(white, dodgerblue);
+	}
+
+	.swac__ct__external {
+		@include badge(white, crimson);
+	}
+
+	.swac__ct__annotation {
+		@include badge(white, goldenrod);
+	}
+
+	p {
+		padding:10px;
+		margin:0px;
+	}
+}

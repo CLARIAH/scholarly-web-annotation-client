@@ -1,29 +1,29 @@
-
 'use strict'
 
 import React from 'react';
+import IDUtil from '../../util/IDUtil';
 
-class CandidateTarget extends React.Component {
+export default class CandidateTarget extends React.Component {
+
     constructor(props) {
         super(props);
-        this.handleClick = this.handleClick.bind(this);
+        this.CLASS_PREFIX = 'ct';
     }
-    handleClick() {
-        this.props.onClick(this.props.candidate);
-    }
+
+    handleClick = () => this.props.onClick(this.props.candidate);
+
     render() {
-        //console.log(this.props.candidate);
-        var badgeType = "badge badge-info";
-        var targetType = "Resource";
+        let badgeClass = IDUtil.cssClassName('resource', this.CLASS_PREFIX);
+        let targetType = "Resource";
         if (this.props.candidate.type === "external") {
-            badgeType = "badge badge-secondary";
+            badgeClass = IDUtil.cssClassName('external', this.CLASS_PREFIX);
         }
         // TO DO: deal with elements that have multiple types
-        var text = "";
+        let text = "";
         if (this.props.candidate.type === "annotation") {
-            text = this.props.candidate.params.text;
-            badgeType = "badge badge-success";
+            badgeClass = IDUtil.cssClassName('annotation', this.CLASS_PREFIX);
             targetType = "Annotation";
+            text = this.props.candidate.params.text;
         } else if (this.props.candidate.mimeType === "text") {
             if (this.props.candidate.params.quote) {
                 text = this.props.candidate.params.quote.exact;
@@ -37,40 +37,13 @@ class CandidateTarget extends React.Component {
             text = text.substr(0,100) + "...";
         }
         return (
-            <li
-                onClick={this.handleClick}
-                className="list-group-item candidate-target">
-                <table>
-                    <tbody>
-                        <tr>
-                            <td>
-                    <label className="annotation-text">{targetType}:</label>
-                            </td>
-                            <td>
-                    <span className="annotation-text">{this.props.candidate.source}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                    <label className="annotation-text">Type:</label>
-                            </td>
-                            <td>
-                    <span className={badgeType}>{this.props.candidate.label}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                    <label className="annotation-text">Content:</label>
-                            </td>
-                            <td>
-                    <span className="annotation-text">{text}</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </li>
+            <div className={IDUtil.cssClassName('candidate-target')} onClick={this.handleClick}>
+                {this.props.candidate.source}
+                <span className={badgeClass}>{this.props.candidate.label}</span>
+                <span className={IDUtil.cssClassName('target-type',this.CLASS_PREFIX)}>{targetType}</span>
+
+                <p>{text}</p>
+            </div>
         )
     }
 }
-
-export default CandidateTarget;

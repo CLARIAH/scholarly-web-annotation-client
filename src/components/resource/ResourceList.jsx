@@ -80,7 +80,7 @@ class ResourceList extends React.Component {
                     key={itemType + '__tab_content'}
                     id={itemType}
                     className={this.state.view === itemType ? 'tab-pane active' : 'tab-pane'}>
-                    <ul className="list-group annotation-scroll-list">
+                    <ul>
                         {itemList}
                     </ul>
                 </div>

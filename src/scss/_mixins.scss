@@ -1,0 +1,14 @@
+
+@mixin badge($color : $clWhite, $backgroundColor : $clSecondary) {
+  display: inline-block;
+  color: $color;
+  background-color: $backgroundColor;
+  font-family: $fontHeading;
+  border-radius: 25px;
+  font-size: 0.85em;
+  font-weight: bold;
+  padding: 3px 15px;
+  min-width: 18px;
+  text-align: center;
+  margin-top: 1px;
+}

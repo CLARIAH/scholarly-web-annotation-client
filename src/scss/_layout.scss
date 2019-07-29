@@ -131,24 +131,7 @@
   min-height: 200px;
 }
 
-/* submenu + count label */
-
-.swac__count {
-  display: inline-block;
-  font-family: $fontHeading;
-  float: right;
-  margin-left: 15px;
-  background-color: $clSecondary;
-  color: $clWhite;
-  border-radius: 25px;
-  font-size: 0.8em;
-  font-weight: bold;
-  padding: 2px 4px 3px 4px;
-  line-height: 13px;
-  min-width: 18px;
-  text-align: center;
-  margin-top: 1px;
-}
+/* submenu */
 
 .swac__submenu {
   border-bottom: 1px solid $clGreyTint;
@@ -197,4 +180,34 @@
 
 .swac__radio-group {
   display: inline-block;
+  > * {
+    margin-right:5px;
+  }
+}
+
+/* for simple ul listing stuff */
+
+.swac__item-list {
+  list-style:none;
+  margin:0px 0px 10px 0px;
+  padding:0px;
+}
+
+/* Simple info circle */
+
+.swac__info {
+  display: inline-block;
+  color: $clWhite;
+  background-color: $clDark;
+  font-family: $fontHeading;
+  border-radius: 25px;
+  font-weight: bold;
+  min-width: 18px;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* Simple header title */
+.swac__block-title {
+  fond-weight:bold;
 }

@@ -1,37 +1,27 @@
-
 'use strict'
 
 import React from 'react';
 import CandidateTarget from './CandidateTarget.jsx';
+import IDUtil from '../../util/IDUtil';
 
 export default class SelectedList extends React.Component {
+
     constructor(props) {
         super(props);
-        this.removeTarget = this.removeTarget.bind(this);
-        this.state = {selected: []};
     }
-    removeTarget(candidate) {
-        this.props.removeFromSelected(candidate);
-    }
+
+    removeTarget = candidate => this.props.removeFromSelected(candidate);
+
     render() {
-        var selectedList = this;
-        var selectedTargets = this.props.candidates.map(function(candidate) {
-            return (
-                <CandidateTarget
-                    onClick={selectedList.removeTarget}
-                    key={candidate.source}
-                    candidate={candidate}
-                />
-            );
-        });
+        const selectedTargets = this.props.candidates.map(
+            candidate => <CandidateTarget onClick={this.removeTarget} key={'__sel__' + candidate.source} candidate={candidate}/>
+        );
         return (
             <div className="selectedList">
-                <ul className="list-group candidate-scroll-list">
+                <ul className={IDUtil.cssClassName('item-list')}>
                     {selectedTargets}
                 </ul>
             </div>
         )
     }
 }
-
-

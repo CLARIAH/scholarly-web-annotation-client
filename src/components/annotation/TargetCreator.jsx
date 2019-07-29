@@ -94,13 +94,13 @@ export default class TargetCreator extends React.Component {
         return (
             <div className={IDUtil.cssClassName('target-creator')}>
                 <div>
-                    <h3>Available Targets</h3>
-                    <span>Click on a target to select it.</span>
+                    <label className={IDUtil.cssClassName('block-title')}>Available Targets</label>&nbsp;
+                    <span className={IDUtil.cssClassName('info')} title="Click on a target to select it.">i</span>
                     {tabbedViews}
                 </div>
                 <div>
-                    <h3>Selected Targets</h3>
-                    <span>Click on a selected target to deselect it.</span>
+                    <label className={IDUtil.cssClassName('block-title')}>Selected Targets</label>&nbsp;
+                    <span className={IDUtil.cssClassName('info')} title="Click on a selected target to deselect it.">i</span>
                     <SelectedList candidates={this.state.selected} removeFromSelected={this.removeFromSelected}/>
                 </div>
             </div>
