@@ -107,11 +107,10 @@ export default class Annotation extends React.Component {
         }
         const breadcrumbs = AnnotationActions.createBreadcrumbTrail(source.data.rdfaResource);
         const breadcrumbLabels = breadcrumbs.map((crumb, index) => {
-            let next = " > ";
-            if (!index) next = "";
+            const next = index == 0 ? null : <span title={crumb.property}>&nbsp;&gt;&nbsp;</span>;
             return (
                 <span key={"crumb" + index} onMouseOver={this.onMouseOverHandler.bind(this, crumb)} onMouseOut={this.onMouseOutHandler.bind(this, crumb)}>
-                    <span title={crumb.property}>{next}</span>
+                    {next}
                     <span className={IDUtil.cssClassName('badge primary')} title={"Identifier: " + crumb.id}>
                        {crumb.type}
                     </span>
@@ -119,9 +118,11 @@ export default class Annotation extends React.Component {
             );
         });
         return (
-            <div key={targetCount} className={IDUtil.cssClassName('annotation-target'), this.CLASS_PREFIX}>
+            <div key={targetCount} className={IDUtil.cssClassName('annotation-target', this.CLASS_PREFIX)}>
                 <div className={IDUtil.cssClassName('breadcrumbs')}>{breadcrumbLabels}</div>
+                &nbsp;&gt;&nbsp;
                 <label className={IDUtil.cssClassName('badge default')}>Target content</label>
+                &nbsp;&gt;&nbsp;
                 {text}
             </div>
         );
@@ -131,12 +132,11 @@ export default class Annotation extends React.Component {
         const text = target.type === "Text" ? AnnotationActions.getTargetText(target, source) : '';
         const breadcrumbs = AnnotationActions.createBreadcrumbTrail(target.source);
         const breadcrumbLabels = breadcrumbs.map((crumb, index) => {
-            let next = " > ";
-            if (!index) next = "";
+            const next = index == 0 ? null : <span title={crumb.property}>&nbsp;&gt;&nbsp;</span>;
             const crumbType = crumb.type[0].substr(crumb.type[0].indexOf("#") + 1);
             return (
                 <span key={"crumb" + index}>
-                    <span title={crumb.property}>{next}</span>
+                    {next}
                     <span className={IDUtil.cssClassName('badge secondary')} title={"Identifier: " + crumb.id}>
                        {crumbType}
                     </span>
@@ -144,9 +144,11 @@ export default class Annotation extends React.Component {
             )
         });
         return (
-            <div key={targetCount} className={IDUtil.cssClassName('annotation-target'), this.CLASS_PREFIX}>
+            <div key={targetCount} className={IDUtil.cssClassName('annotation-target', this.CLASS_PREFIX)}>
                 <div className={IDUtil.cssClassName('breadcrumbs')}>{breadcrumbLabels}</div>
+                &nbsp;&gt;&nbsp;
                 <label className={IDUtil.cssClassName('badge default')}>Target content</label>
+                &nbsp;&gt;&nbsp;
                 {text}
             </div>
         );
@@ -155,7 +157,7 @@ export default class Annotation extends React.Component {
     renderAnnotationTarget = (target, source) => {
         const body = AnnotationActions.extractBodies(source.data)[0];
         return (
-            <div key={targetCount} className={IDUtil.cssClassName('annotation-target'), this.CLASS_PREFIX}>
+            <div key={targetCount} className={IDUtil.cssClassName('annotation-target', this.CLASS_PREFIX)}>
                 <span className={IDUtil.cssClassName('badge annotation')}>{body.type}</span>
                 {body.value}
             </div>
@@ -169,7 +171,7 @@ export default class Annotation extends React.Component {
 
         const bodies = AnnotationActions.extractBodies(annotation).map((body, index) => {
             return (
-                <div key={'__body__' + index} className={IDUtil.cssClassName('annotation-body', this.CLASS_PREFIX)}>
+                <div key={'__body__' + index}>
                     <div className={IDUtil.cssClassName('badge body-' + body.purpose)}>{body.purpose}</div>
                     <label>{body.value}</label>
                 </div>
@@ -203,14 +205,14 @@ export default class Annotation extends React.Component {
             }
         }).filter(target => { return target !== undefined });
 
-        console.debug('targets', targets);
-
         return (
             <div className={IDUtil.cssClassName(this.state.highlighted ? 'annotation active' : 'annotation')} title={annotation.id}>
                 <div onClick={this.toggleHighlight}>
                     <abbr>{timestamp}&nbsp;(created by: {annotation.creator})</abbr>
                     {targets}
-                    {bodies}
+                    <div className={IDUtil.cssClassName('annotation-bodies', this.CLASS_PREFIX)}>
+                        {bodies}
+                    </div>
                 </div>
                 {actionButtons}
             </div>

@@ -1,10 +1,28 @@
 .swac__annotation {
 	padding: 10px;
 	&.active {
-		background-color: $clLightBlue;
+		border-left: 3px solid $clLightBlue;
 	}
 
-	.swac__a__annotation-body {
+	.swac__a__annotation-bodies {
+		display:flex;
+		flex-direction: row;
+		justify-content: flex-start;
+		flex-flow: wrap;
+		margin: 5px 0px;
+		> div {
+			label {
+				margin:0px 5px;
+			}
+			display:flex;
+			flex-direction: row;
+			justify-content: flex-start;
+		}
+	}
 
+	.swac__a__annotation-target {
+		display:flex;
+		flex-direction: row;
+		justify-content: flex-start;
 	}
 }
