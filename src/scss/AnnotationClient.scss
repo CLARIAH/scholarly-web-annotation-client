@@ -6,5 +6,28 @@
 
     .swac__acl__server-status {
     	display:flex;
+    	flex-direction: row;
+    	justify-content: space-between;
+    	margin-bottom: 20px;
+    	border-bottom: 1px solid $clDark;
+    	> * {
+    		&:first-child {
+    			width:50%;
+    			padding-top: 8px;
+    			display:flex;
+    			font-weight: bold;
+    		}
+    	}
+    }
+
+    .swac__acl__access {
+    	display:flex;
+    	margin-bottom: 20px;
+    	border-bottom: 1px solid $clDark;
+    	> * {
+    		&:first-child {
+    			margin-right:15px;
+    		}
+    	}
     }
 }

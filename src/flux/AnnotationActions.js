@@ -7,8 +7,9 @@ import TimeUtil from "../util/TimeUtil.js";
 import TargetUtil from "../util/TargetUtil.js";
 import FRBRooUtil from "../util/FRBRooUtil.js";
 
-var restorePermission = () => {
-    var permission = {accessStatus: ["private", "public"], permission: "private"};
+const restorePermission = () => {
+    console.debug('restoring permissions & access status')
+    let permission = {accessStatus: ["private", "public"], permission: "private"};
     try {
         if (window.localStorage && window.localStorage.hasOwnProperty("swac-permission")) {
             permission = JSON.parse(window.localStorage.getItem("swac-permission"));
@@ -21,7 +22,7 @@ var restorePermission = () => {
 
 let permission = restorePermission();
 
-var storePermission = (permission) => {
+const storePermission = (permission) => {
     if (!window.localStorage) {
     } else {
         window.localStorage.setItem("swac-permission", JSON.stringify(permission));
@@ -68,18 +69,24 @@ const AnnotationActions = {
         setTimeout(AnnotationActions.pollServer, 60000);
     },
 
-    getAccessStatus() {
-        return AnnotationActions.accessStatus;
-    },
+    /* -------------------------------- ACCESS STATUS FUNCTIONS --------------------------------- */
 
     setAccessStatus(accessStatus) {
-        AnnotationActions.accessStatus = accessStatus;
-        storePermission({permission: AnnotationActions.permission, accessStatus: accessStatus});
-        if (AnnotationActions.accessStatus.length === 0) {
-            AnnotationActions.dispatchAnnotations([]); // when no access levels are selected
-        } else {
-            AnnotationActions.loadAnnotations(AnnotationStore.topResources);
+        switch(accessStatus) {
+            case 'private' : AnnotationActions.accessStatus = ['private'];break;
+            case 'public' : AnnotationActions.accessStatus = ['public'];break;
+            case 'all' : AnnotationActions.accessStatus = ['private', 'public'];break;
+            default: AnnotationActions.accessStatus = ['private', 'public'];break;
         }
+        storePermission({permission: AnnotationActions.permission, accessStatus: accessStatus});
+        AnnotationActions.loadAnnotations(AnnotationStore.topResources);
+    },
+
+    getAccessStatus() {
+        if(AnnotationActions.accessStatus.length === 1) {
+            return AnnotationActions.accessStatus[0]
+        }
+        return 'all';
     },
 
     getPermission() {
@@ -200,7 +207,7 @@ const AnnotationActions = {
         let externalIds = externalResources.map((res) => { return res.parentResource }).filter((externalId) => { return typeof externalId === "string"});
 
         resourceIds = resourceIds.concat(externalIds);
-        console.debug('fetching annotations for: ', resourceIds)
+        console.debug('fetching annotations for: ', resourceIds, AnnotationActions.accessStatus)
         AnnotationAPI.getAnnotationsByTargets(resourceIds, AnnotationActions.accessStatus, (error, annotations) => {
             if (error) {
                 throw error;

@@ -148,6 +148,7 @@ const AnnotationAPI = {
             let error = new TypeError("resource ID should be string");
             return callback(error, null);
         }
+        console.debug('access status is: ', accessStatus);
         let url = AnnotationAPI.annotationServer + "/annotations" + "?"
         + "target_id=" + targetId
         + "&access_status=" + accessStatus.join(",")

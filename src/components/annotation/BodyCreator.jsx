@@ -96,8 +96,8 @@ class BodyCreator extends React.Component {
 
         return (
             <div>
-                <div className={IDUtil.cssClassName('submenu')}>{tabs}</div>
-                <div>{tabContents}</div>
+                <div className={IDUtil.cssClassName('tabs')}>{tabs}</div>
+                <div className={IDUtil.cssClassName('tab-contents')}>{tabContents}</div>
             </div>
         )
     }

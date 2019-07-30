@@ -35,7 +35,6 @@
   background-image: $arrowRightDarkUrl;
   background-position: center right 10px;
   background-repeat: no-repeat;
-  margin: 10px 0px;
   background-color: $clGrey;
   color: $clDark;
   border-width: 0;
@@ -131,12 +130,11 @@
   min-height: 200px;
 }
 
-/* submenu */
+/* tabs & tab content panels */
 
-.swac__submenu {
+.swac__tabs {
   border-bottom: 1px solid $clGreyTint;
   margin-bottom: 20px;
-  padding-left: 20px;
 
   a{
     font-size: 15px;
@@ -159,14 +157,21 @@
   }
 }
 
+.swac__tab-contents {
+    > * {
+      background-color: $clWhite;
+      border: 1px solid $clGrey;
+      padding: 5px;
+      box-shadow: 2px 1px 1px $clGrey;
+    }
+}
+
 /* for showing the connection status with the server */
 .swac__led-green {
   margin: 3px;
   width: 15px;
   height: 15px;
   background-color: #ABFF00;
-  border-radius: 50%;
-  box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #304701 0 -1px 9px, #89FF00 0 2px 12px;
 }
 
 .swac__led-red {
@@ -174,8 +179,6 @@
   width: 15px;
   height: 15px;
   background-color: #F00;
-  border-radius: 50%;
-  box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #441313 0 -1px 9px, rgba(255, 0, 0, 0.5) 0 2px 12px;
 }
 
 /* badges for different types/categories */
@@ -183,6 +186,14 @@
 .swac__badge {
   &.default {
     @include badge(white, $clDark);
+  }
+
+  &.primary {
+    @include badge(white, $clLightBlue);
+  }
+
+  &.secondary {
+    @include badge(white, $clBlue);
   }
 
   &.resource {
@@ -235,6 +246,7 @@
   padding:0px;
   > li {
     margin-bottom: 5px;
+    border-bottom: 1px solid $clGrey;
   }
 }
 
@@ -254,5 +266,10 @@
 
 /* Simple header title */
 .swac__block-title {
-  fond-weight:bold;
+  font-weight:bold;
+}
+
+
+.swac__breadcrumbs {
+
 }

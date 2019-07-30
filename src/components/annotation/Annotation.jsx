@@ -14,6 +14,7 @@ export default class Annotation extends React.Component {
         this.state = {
             highlighted: false
         }
+        this.CLASS_PREFIX = 'a';
     }
 
     componentDidMount() {
@@ -50,103 +51,6 @@ export default class Annotation extends React.Component {
         this.setState({highlighted: this.state.highlighted ? false : true});
     };
 
-    createResourceTarget = (target, source, targetCount) => {
-        let text = "";
-        if (target.type === "Text") {
-            text = AnnotationActions.getTargetText(target, source);
-        } else if (target.type === "Image") {
-            let selector = AnnotationActions.getTargetMediaFragment(target);
-            let rect = selector.rect;
-            let topLeft = selector.rect.x + ',' + selector.rect.y;
-            let bottomRight = selector.rect.x + selector.rect.w + ',' + (selector.rect.y + selector.rect.h);
-            text = <span>{'[' + topLeft + ' - ' + bottomRight + ']'}</span>;
-        } else if (target.type === "Video") {
-            let selector = AnnotationActions.getTargetMediaFragment(target);
-            let segment = selector.interval;
-            text = (
-                <span>
-                    {'[' + AnnotationActions.formatTime(segment.start) + ' - ' + AnnotationActions.formatTime(segment.end) + ']'}
-                </span>
-            );
-        }
-        if (text.length > 40) {
-            text = text.substr(0, 37) + "...";
-        }
-        let breadcrumbs = AnnotationActions.createBreadcrumbTrail(source.data.rdfaResource);
-        let breadcrumbLabels = breadcrumbs.map((crumb, index) => {
-            let next = " > ";
-            if (!index) next = "";
-            return (
-                <span key={"crumb" + index}
-                    onMouseOver={this.onMouseOverHandler.bind(this, crumb)}
-                    onMouseOut={this.onMouseOutHandler.bind(this, crumb)}
-                >
-                    <span title={crumb.property}>
-                    {next}
-                    </span>
-                    <span className="badge badge-info" title={"Identifier: " + crumb.id}>
-                       {crumb.type}
-                    </span>
-                    &nbsp;
-                </span>
-            );
-        });
-        return (
-            <div key={targetCount}>
-                <div className="breadcrumbs">
-                    {breadcrumbLabels}
-                </div>
-                <label className="badge badge-warning">Target content</label>
-                {' '}
-                <span
-                    className="annotation-text"
-                >{text}</span>
-            </div>
-        );
-    };
-
-    createExternalTarget = (target, source, targetCount) => {
-        const text = target.type === "Text" ? AnnotationActions.getTargetText(target, source) : '';
-        const breadcrumbs = AnnotationActions.createBreadcrumbTrail(target.source);
-        const breadcrumbLabels = breadcrumbs.map((crumb, index) => {
-            let next = " > ";
-            if (!index) next = "";
-            const crumbType = crumb.type[0].substr(crumb.type[0].indexOf("#") + 1);
-            return (
-                <span key={"crumb" + index}>
-                    <span title={crumb.property}>
-                    {next}
-                    </span>
-                    <span className="badge badge-secondary" title={"Identifier: " + crumb.id}>
-                       {crumbType}
-                    </span>
-                    &nbsp;
-                </span>
-            )
-        });
-        return (
-            <div key={targetCount}>
-                <div className="breadcrumbs">
-                    {breadcrumbLabels}
-                </div>
-                <label className="badge badge-warning">Target content</label>
-                {' '}
-                <span className="annotation-text">{text}</span>
-            </div>
-        );
-    };
-
-    createAnnotationTarget = (target, source) => {
-        const body = AnnotationActions.extractBodies(source.data)[0];
-        return (
-            <div key={targetCount}>
-                <span className="badge badge-success">{body.type}</span>
-                &nbsp;
-                <span className="annotation-text">{body.value}</span>
-            </div>
-        );
-    };
-
     canEdit = () => this.props.currentUser && this.props.currentUser.username === this.props.annotation.creator ? true : false;
 
     canDelete = () => this.props.currentUser && this.props.currentUser.username === this.props.annotation.creator ? true : false;
@@ -177,57 +81,136 @@ export default class Annotation extends React.Component {
             </div>
         );
 
-    }
+    };
+
+    renderResourceTarget = (target, source, targetCount) => {
+        let text = "";
+        if (target.type === "Text") {
+            text = AnnotationActions.getTargetText(target, source);
+        } else if (target.type === "Image") {
+            let selector = AnnotationActions.getTargetMediaFragment(target);
+            let rect = selector.rect;
+            let topLeft = selector.rect.x + ',' + selector.rect.y;
+            let bottomRight = selector.rect.x + selector.rect.w + ',' + (selector.rect.y + selector.rect.h);
+            text = <span>{'[' + topLeft + ' - ' + bottomRight + ']'}</span>;
+        } else if (target.type === "Video") {
+            let selector = AnnotationActions.getTargetMediaFragment(target);
+            let segment = selector.interval;
+            text = (
+                <span>
+                    {'[' + AnnotationActions.formatTime(segment.start) + ' - ' + AnnotationActions.formatTime(segment.end) + ']'}
+                </span>
+            );
+        }
+        if (text.length > 40) {
+            text = text.substr(0, 37) + "...";
+        }
+        const breadcrumbs = AnnotationActions.createBreadcrumbTrail(source.data.rdfaResource);
+        const breadcrumbLabels = breadcrumbs.map((crumb, index) => {
+            let next = " > ";
+            if (!index) next = "";
+            return (
+                <span key={"crumb" + index} onMouseOver={this.onMouseOverHandler.bind(this, crumb)} onMouseOut={this.onMouseOutHandler.bind(this, crumb)}>
+                    <span title={crumb.property}>{next}</span>
+                    <span className={IDUtil.cssClassName('badge primary')} title={"Identifier: " + crumb.id}>
+                       {crumb.type}
+                    </span>
+                </span>
+            );
+        });
+        return (
+            <div key={targetCount} className={IDUtil.cssClassName('annotation-target'), this.CLASS_PREFIX}>
+                <div className={IDUtil.cssClassName('breadcrumbs')}>{breadcrumbLabels}</div>
+                <label className={IDUtil.cssClassName('badge default')}>Target content</label>
+                {text}
+            </div>
+        );
+    };
+
+    renderExternalTarget = (target, source, targetCount) => {
+        const text = target.type === "Text" ? AnnotationActions.getTargetText(target, source) : '';
+        const breadcrumbs = AnnotationActions.createBreadcrumbTrail(target.source);
+        const breadcrumbLabels = breadcrumbs.map((crumb, index) => {
+            let next = " > ";
+            if (!index) next = "";
+            const crumbType = crumb.type[0].substr(crumb.type[0].indexOf("#") + 1);
+            return (
+                <span key={"crumb" + index}>
+                    <span title={crumb.property}>{next}</span>
+                    <span className={IDUtil.cssClassName('badge secondary')} title={"Identifier: " + crumb.id}>
+                       {crumbType}
+                    </span>
+                </span>
+            )
+        });
+        return (
+            <div key={targetCount} className={IDUtil.cssClassName('annotation-target'), this.CLASS_PREFIX}>
+                <div className={IDUtil.cssClassName('breadcrumbs')}>{breadcrumbLabels}</div>
+                <label className={IDUtil.cssClassName('badge default')}>Target content</label>
+                {text}
+            </div>
+        );
+    };
+
+    renderAnnotationTarget = (target, source) => {
+        const body = AnnotationActions.extractBodies(source.data)[0];
+        return (
+            <div key={targetCount} className={IDUtil.cssClassName('annotation-target'), this.CLASS_PREFIX}>
+                <span className={IDUtil.cssClassName('badge annotation')}>{body.type}</span>
+                {body.value}
+            </div>
+        );
+    };
 
     render() {
         let annotation = this.props.annotation;
         const actionButtons = this.renderButtons();
-
         const timestamp = (new Date(annotation.created)).toLocaleString();
+
         const bodies = AnnotationActions.extractBodies(annotation).map((body, index) => {
             return (
-                <div key={'__body__' + index} >
+                <div key={'__body__' + index} className={IDUtil.cssClassName('annotation-body', this.CLASS_PREFIX)}>
                     <div className={IDUtil.cssClassName('badge body-' + body.purpose)}>{body.purpose}</div>
-                    &nbsp;
-                    <span>
-                        {body.value}
-                    </span>
+                    <label>{body.value}</label>
                 </div>
             );
         });
+
         let targetCount = 0;
+        console.debug('annotation', annotation)
         const targets = AnnotationActions.extractTargets(annotation).map(target => {
+            console.debug('target', target);
             try {
                 targetCount++;
                 let source = AnnotationActions.lookupIdentifier(AnnotationActions.extractTargetIdentifier(target));
+                console.debug('source', source)
                 var text = "";
                 var label;
                 if (source.type === "external") {
-                    return this.createExternalTarget(target, source, targetCount);
+                    return this.renderExternalTarget(target, source, targetCount);
                 }
                 if (source.type === "resource") {
-                    return this.createResourceTarget(target, source, targetCount);
+                    return this.renderResourceTarget(target, source, targetCount);
                 } else if (source.type === "annotation") {
-                    return this.createAnnotationTarget(target, source);
+                    return this.renderAnnotationTarget(target, source);
                 } else if (source.type === undefined) {
                     console.error("source.type is not defined, showing content of annotation target and associated indexed source", target, source);
                 }
             } catch (error) {
                 // filter out annotation targets that result in errors;
+                console.debug(error);
                 return undefined;
             }
-        }).filter((target) => { return target !== undefined });
+        }).filter(target => { return target !== undefined });
+
+        console.debug('targets', targets);
 
         return (
             <div className={IDUtil.cssClassName(this.state.highlighted ? 'annotation active' : 'annotation')} title={annotation.id}>
                 <div onClick={this.toggleHighlight}>
-                    <abbr>
-                        {timestamp}&nbsp;
-                        (created by: {annotation.creator})
-                    </abbr>
+                    <abbr>{timestamp}&nbsp;(created by: {annotation.creator})</abbr>
                     {targets}
                     {bodies}
-                    <br/>
                 </div>
                 {actionButtons}
             </div>

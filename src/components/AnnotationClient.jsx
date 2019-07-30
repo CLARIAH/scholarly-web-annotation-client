@@ -17,7 +17,6 @@ import AppAnnotationStore from './../flux/AnnotationStore';
 import AnnotationActions from '../flux/AnnotationActions.js';
 import IDUtil from '../util/IDUtil';
 import LoginBox from './LoginBox';
-//import '../css/swa.css';
 
 export default class AnnotationClient extends React.Component {
 
@@ -27,8 +26,7 @@ export default class AnnotationClient extends React.Component {
             user: null,
             view: "annotations",
             serverAvailable: false,
-            accessStatus: AnnotationActions.accessStatus
-            //accessStatus: ["private", "public"],
+            selectedAccessStatus : AnnotationActions.getAccessStatus()
         };
         this.CLASS_PREFIX = 'acl'
     }
@@ -49,18 +47,9 @@ export default class AnnotationClient extends React.Component {
     }
 
     handleAccessPreferenceChange = event => {
-        console.debug(event)
         let level = event.target.value;
-        var accessStatus = this.state.accessStatus;
-        if (!accessStatus.includes(level)) {
-            accessStatus.push(level);
-        } else {
-            accessStatus.splice(accessStatus.indexOf(level), 1);
-        }
-        this.setState({
-            accessStatus: accessStatus
-        });
-        AnnotationActions.setAccessStatus(accessStatus);
+        this.setState({selectedAccessStatus: level});
+        AnnotationActions.setAccessStatus(level);
     };
 
     selectTab(view) {
@@ -101,51 +90,48 @@ export default class AnnotationClient extends React.Component {
 
         return (
             <div>
-                <div className={IDUtil.cssClassName('submenu')}>{tabs}</div>
-                <div>{tabContents}</div>
+                <div className={IDUtil.cssClassName('tabs')}>{tabs}</div>
+                <div className={IDUtil.cssClassName('tab-contents')}>{tabContents}</div>
             </div>
         )
     };
 
     renderAccessPreferences = (accessStatus, onChangeFunc) => {
         return (
-            <div className="access-preferences">
-                <div>Show:</div>
-                <div>
-                    <label>
-                        <input type="checkbox" value="private" checked={accessStatus.includes("private")} onChange={onChangeFunc}/>
-                        Private annotations
-                    </label>
-                </div>
-                <div>
-                    <label>
-                        <input type="checkbox" value="public" checked={accessStatus.includes("public")} onChange={onChangeFunc}/>
-                        Public annotations
-                    </label>
+            <div className={IDUtil.cssClassName('access', this.CLASS_PREFIX)}>
+                <label>Annotation access level:</label>
+                <div className={IDUtil.cssClassName('radio-group')}>
+                    <input type="radio" value="private" checked={accessStatus === "private"} onChange={onChangeFunc}/>
+                    <label>Private</label>
+                    <input type="radio" value="public" checked={accessStatus === "public"} onChange={onChangeFunc}/>
+                    <label>Public</label>
+                    <input type="radio" value="all" checked={accessStatus === "all"} onChange={onChangeFunc}/>
+                    <label>All</label>
                 </div>
             </div>
         )
     };
 
-    renderServerStatus = serverAvailable => {
+    renderServerStatusAndLogin = serverAvailable => {
         return (
             <div className={IDUtil.cssClassName('server-status', this.CLASS_PREFIX)}>
-                <label>Annotation server status:</label>
-                <div className={serverAvailable ? IDUtil.cssClassName('led-green') : IDUtil.cssClassName('led-red')}/>
+                <div>
+                    <label>Annotation server status:</label>
+                    <div className={serverAvailable ? IDUtil.cssClassName('led-green') : IDUtil.cssClassName('led-red')}/>
+                </div>
+                <LoginBox user={this.state.user}/>
             </div>
         )
     };
 
     render() {
         const tabbedViews = this.renderTabbedViews(this.state.view, this.state.user, this.props.config);
-        const accessPreferences = this.renderAccessPreferences(this.state.accessStatus, this.handleAccessPreferenceChange)
-        const serverStatus = this.renderServerStatus(this.state.serverAvailable);
+        const accessPreferences = this.renderAccessPreferences(this.state.selectedAccessStatus, this.handleAccessPreferenceChange)
+        const serverStatusAndLogin = this.renderServerStatusAndLogin(this.state.serverAvailable);
 
         return (
             <div className={IDUtil.cssClassName('annotation-client')}>
-                <h1>Annotator</h1>
-                <LoginBox user={this.state.user}/>
-                {serverStatus}
+                {serverStatusAndLogin}
                 {accessPreferences}
                 {tabbedViews}
             </div>

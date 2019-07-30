@@ -1,6 +1,10 @@
 .swac__annotation {
 	padding: 10px;
 	&.active {
-		background-color:$clWhite;
+		background-color: $clLightBlue;
+	}
+
+	.swac__a__annotation-body {
+
 	}
 }

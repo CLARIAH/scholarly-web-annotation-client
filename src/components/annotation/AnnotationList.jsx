@@ -17,7 +17,7 @@ class AnnotationList extends React.Component {
 
     componentDidMount() {
         AppAnnotationStore.bind('loaded-annotations', this.setAnnotations.bind(this));
-        AppAnnotationStore.bind('load-annotations', this.loadAnnotations.bind(this));
+        //AppAnnotationStore.bind('load-annotations', this.loadAnnotations.bind(this)); FIXME this is never called!
         AppAnnotationStore.bind('changed-target', this.loadAnnotations.bind(this));
         AppAnnotationStore.bind('deleted-annotation', this.loadAnnotations.bind(this));
     }
@@ -27,6 +27,7 @@ class AnnotationList extends React.Component {
     }
 
     setAnnotations(annotations) {
+        console.debug('RELOADING ANNOTATIONS: ', annotations);
         this.setState({annotations: annotations});
     }
 

@@ -286,12 +286,16 @@ const RDFaUtil = {
     },
 
     _lookupResource : (resourceId, resourceIndex) => {
-        if (!resourceIndex) {
+        if(!resourceIndex) {
             throw Error("No RDFa resources indexed. Run RDFaUtil.indexRDFa to access RDFa resources.");
         }
-        if (resourceIndex.resources.hasOwnProperty(resourceId)) {
+        if(resourceIndex.resources && resourceIndex.resources.hasOwnProperty(resourceId)) {
+            console.debug('DEBUG: does this lookup ever happen?');
             return resourceIndex.resources[resourceId];
-        } else {
+        } else if(resourceIndex[resourceId]) {
+            return resourceIndex[resourceId];
+        }
+        else {
             return null;
         }
     },

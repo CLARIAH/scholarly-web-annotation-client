@@ -193,7 +193,7 @@ class AnnotationCreator extends React.Component {
 
         const editor = this.state.editor === "target" ? targetEditor : bodyEditor;
         const makeAnnotationBtn = this.props.currentUser ?
-            <button className={IDUtil.cssClassName('btn')} onClick={this.makeAnnotation}>Make annotation</button> :
+            <button className={IDUtil.cssClassName('btn plus')} onClick={this.makeAnnotation}>Annotation</button> :
             null
         return (
             <div className={IDUtil.cssClassName('annotation-creator')}>

@@ -1,39 +1,21 @@
-/*
- * annotate-rdfa.js allows user to select RDFA-labeled text fragments
- * in RDFa enriched HTML documents.
- *
- */
-
-// TO DO: deal with elements that have multiple types
-
 'use strict'
 
+import React from 'react';
 import AnnotationCreator from './AnnotationCreator.jsx';
 import AnnotationList from './AnnotationList.jsx';
-import React from 'react';
-import AppAnnotationStore from './../../flux/AnnotationStore';
-import AnnotationActions from '../../flux/AnnotationActions.js';
+import IDUtil from '../../util/IDUtil';
 
-export default class AnnotationViewer extends React.Component {
+export default class AnnotationViewer extends React.PureComponent {
 
     constructor(props) {
         super(props);
-        this.state = {
-            view: "annotations",
-        };
     }
 
     render() {
         return (
-            <div className="annotationViewer">
-                <AnnotationCreator
-                    currentUser={this.props.currentUser}
-                    config={this.props.config}
-                />
-                <AnnotationList
-                    currentUser={this.props.currentUser}
-                    config={this.props.config}
-                />
+            <div className={IDUtil.cssClassName('annotation-viewer')}>
+                <AnnotationCreator currentUser={this.props.currentUser} config={this.props.config}/>
+                <AnnotationList currentUser={this.props.currentUser} config={this.props.config}/>
             </div>
         );
     }
