@@ -2,7 +2,6 @@
 
 import React from 'react';
 import AppAnnotationStore from './../../flux/AnnotationStore';
-import AnnotationStore from './../../flux/AnnotationStore';
 import Resource from './Resource';
 import IDUtil from '../../util/IDUtil';
 
@@ -20,9 +19,9 @@ class ResourceList extends React.Component {
     }
 
     listResources = topResources => {
-        let resourceIds = Object.keys(AnnotationStore.resourceIndex);
-        let externalIds = Object.keys(AnnotationStore.externalResourceIndex).filter((resourceId) => {
-            return !AnnotationStore.resourceIndex.hasOwnProperty(resourceId);
+        let resourceIds = Object.keys(AppAnnotationStore.resourceIndex);
+        let externalIds = Object.keys(AppAnnotationStore.externalResourceIndex).filter((resourceId) => {
+            return !AppAnnotationStore.resourceIndex.hasOwnProperty(resourceId);
         })
         this.setState({
             resourceIds: resourceIds,
@@ -78,8 +77,8 @@ class ResourceList extends React.Component {
     render() {
         const tabbedView = this.renderTabbedView(
             this.state.view,
-            this.renderResourceList(this.state.resourceIds, AnnotationStore.resourceIndex),
-            this.renderResourceList(this.state.externalIds, AnnotationStore.externalResourceIndex)
+            this.renderResourceList(this.state.resourceIds, AppAnnotationStore.resourceIndex),
+            this.renderResourceList(this.state.externalIds, AppAnnotationStore.externalResourceIndex)
         );
 
         return (

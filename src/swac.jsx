@@ -11,16 +11,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import AnnotationClient from './components/AnnotationClient.jsx';
-import RDFaUtil from './util/RDFaUtil.js';
-import TargetUtil from './util/TargetUtil.js';
-import SelectionUtil from './util/SelectionUtil.js';
-import DOMUtil from './util/DOMUtil.js';
 import defaultConfig from './rdfa-annotation-config.js';
 import AnnotationActions from './flux/AnnotationActions.js';
 import CollectionActions from './flux/CollectionActions.js';
 import AppAnnotationStore from './flux/AnnotationStore.js';
 import AnnotationAPI from './api/AnnotationAPI.js';
-import 'bootstrap';
+
+import RDFaUtil from './util/RDFaUtil.js';
+import FRBRooUtil from './util/FRBRooUtil.js';
+import TargetUtil from './util/TargetUtil.js';
+import SelectionUtil from './util/SelectionUtil.js';
+import DOMUtil from './util/DOMUtil.js';
+
+import 'bootstrap'; //TODO get rid of this
 
 export class ScholarlyWebAnnotator {
 
@@ -163,7 +166,7 @@ export class ScholarlyWebAnnotator {
     /* -------------------------- TODO -------------------------------- */
 
     getAnnotations(resourceId) {
-        return AnnotationActions.lookupAnnotationsByTarget(resourceId);
+        return AppAnnotationStore.lookupAnnotationsByTarget(resourceId);
     }
 
     resourcesChanged() {

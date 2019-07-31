@@ -1,7 +1,5 @@
-import Autosuggest from 'react-autosuggest'; //See: https://github.com/moroshko/react-autosuggest
-import AnnotationActions from '../../flux/AnnotationActions';
 import React from 'react';
-
+import Autosuggest from 'react-autosuggest'; //See: https://github.com/moroshko/react-autosuggest
 
 /*
 Input:
@@ -74,6 +72,7 @@ class ClassifyingForm extends React.Component {
     }
 
     getSuggestions(value, callback) {
+        if(!this.props.services[this.state.vocabulary]) return;
         //cancel all previous outgoing requests
         for(let x=this.xhrs.length;x>0;x--) {
             this.xhrs[x-1].abort();
@@ -100,6 +99,82 @@ class ClassifyingForm extends React.Component {
     }
 
     /* ------------------- functions specifically needed for react-autosuggest ------------------- */
+
+    parseVocabularySuggestion = (suggestion, vocabulary) => {
+        var entry = {
+            value: null,
+            label: {
+                className: "badge badge-success",
+                value: ""
+            },
+            scopeNote: null
+        }
+        if (vocabulary === "GTAA") {
+            let arr = suggestion.label.split('|');
+            entry.value = arr[0];
+            entry.scopeNote = arr[2] ? '(' + arr[2] + ')' : ''
+            switch(arr[1]) {
+                case 'Persoon' :
+                    entry.label = {className: "badge badge-warning", value: "Persoon"};
+                    break;
+                case 'Maker' :
+                    entry.label = {className: "badge badge-warning", value: "Maker"};
+                    break;
+                case 'Geografisch' :
+                    entry.label = {className: "badge badge-success", value: "Locatie"};
+                    break;
+                case 'Naam' :
+                    entry.label = {className: "badge badge-info", value: "Naam"};
+                    break;
+                case 'Onderwerp' :
+                    entry.label = {className: "badge badge-primary", value: "Onderwerp"};
+                    break;
+                case 'Genre' :
+                    entry.label = {className: "badge badge-default", value: "Genre"};
+                    break;
+                case 'B&G Onderwerp' :
+                    entry.label = {className: "badge badge-danger", value: "B&G Onderwerp"};
+                    break;
+                default :
+                    entry.label = {className: "badge badge-default", value: "Concept"};
+                    break;
+            }
+        } else if (vocabulary === "DBpedia") {
+            let arr = suggestion.label.split('|');
+            entry.value = arr[0];
+            entry.scopeNote = arr[2] ? '(' + arr[2] + ')' : ''
+            entry.label = {className: "badge badge-default", value: "Concept"};
+        } else if (vocabulary == 'UNESCO') {
+            let arr = suggestion.prefLabel.split('|');
+            entry.value = arr[0];
+            entry.label.value = arr[1];
+            switch(arr[1]) {
+                case 'Education' :
+                    entry.label.className = "badge badge-warning"
+                    break;
+                case 'Science' :
+                    entry.label.className = "badge badge-warning"
+                    break;
+                case 'Social and human sciences' :
+                    entry.label.className = "badge badge-success"
+                    break;
+                case 'Information and communication' :
+                    entry.label.className = "badge badge-info"
+                    break;
+                case 'Politics, law and economics' :
+                    entry.label.className = "badge badge-primary"
+                    break;
+                case 'Countries and country groupings' :
+                    entry.label.className = "badge badge-default"
+                    break;
+                default :
+                    entry.label.className = "badge badge-warning"
+                    entry.label.value = "Concept";
+                    break;
+            }
+        }
+        return entry;
+    };
 
     loadSuggestions(value) {
         this.setState({
@@ -129,13 +204,13 @@ class ClassifyingForm extends React.Component {
 
     getSuggestionValue(suggestion) {
         this.setState({suggestionId : suggestion.uri});
-        let entry = AnnotationActions.parseVocabularySuggestion(suggestion, this.state.vocabulary);
+        let entry = this.parseVocabularySuggestion(suggestion, this.state.vocabulary);
         return entry.value;
     }
 
     //TODO the rendering should be adapted for different vocabularies
     renderSuggestion(suggestion) {
-        let entry = AnnotationActions.parseVocabularySuggestion(suggestion, this.state.vocabulary);
+        let entry = this.parseVocabularySuggestion(suggestion, this.state.vocabulary);
         return (
             <span>{entry.value}&nbsp;
                 <span className={entry.label.className}>

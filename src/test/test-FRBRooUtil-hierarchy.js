@@ -14,7 +14,6 @@ const { JSDOM } = jsdom;
 import RDFaUtil from "../util/RDFaUtil.js";
 import FRBRooUtil from "../util/FRBRooUtil.js";
 import AnnotationActions from "../flux/AnnotationActions.js";
-import AnnotationStore from "../flux/AnnotationStore.js";
 const $rdf = require("rdflib");
 
 let localURL = "http://localhost:3001/";

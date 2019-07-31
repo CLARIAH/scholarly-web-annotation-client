@@ -1,4 +1,3 @@
-
 "use strict";
 
 const AnnotationAPI = {
@@ -363,18 +362,6 @@ const AnnotationAPI = {
     checkResource : function(resourceId, callback) {
         let url = AnnotationAPI.annotationServer + "/resources/" + resourceId;
         let options = { method: "GET" };
-        AnnotationAPI.makeRequest(url, options, (error, data) => {
-            return callback(error, data);
-        });
-    },
-
-    registerResource : function(resourceMap, callback) {
-        let url = AnnotationAPI.annotationServer + "/resources";
-        var options = {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(resourceMap)
-        };
         AnnotationAPI.makeRequest(url, options, (error, data) => {
             return callback(error, data);
         });

@@ -16,6 +16,8 @@
 
 "use strict";
 
+import AppAnnotationStore from '../flux/AnnotationStore';
+
 import DOMUtil from "./DOMUtil.js";
 import RDFaUtil from "./RDFaUtil.js";
 import FRBRooUtil from "./FRBRooUtil.js";
@@ -349,36 +351,17 @@ const TargetUtil = {
         return TargetUtil.mimeTypeMap[mimeType];
     },
 
-    lookupIdentifier : (targetId, resourceData, annotations) => {
-        if (resourceData.resourceIndex.resources.hasOwnProperty(targetId)) {
-            return {type: "resource", data: resourceData.resourceIndex.resources[targetId]};
-        } else if (resourceData.externalResourceIndex && resourceData.externalResourceIndex.hasOwnProperty(targetId)) {
-            return {type: "external", data: resourceData.externalResourceIndex[targetId]};
-        } else {
-            let source = {type: "unknown", data: null};
-            annotations.forEach((annotation) => {
-                if (annotation.id == targetId) {
-                    source.type = "annotation";
-                    source.data = annotation;
-                }
-            });
-            return source;
-        }
-    },
-
-    mapTargetsToDOMElements : (annotation, resourceData, annotations) => {
-        var domTargets = [];
+    mapTargetsToDOMElements : (annotation) => {
+        let domTargets = [];
         AnnotationUtil.extractTargets(annotation).forEach((target) => {
-            var targetId = AnnotationUtil.extractTargetIdentifier(target);
-            if (!targetId) // target is not loaded in browser window
-                return [];
-            var source = TargetUtil.lookupIdentifier(targetId, resourceData, annotations);
-
+            const targetId = AnnotationUtil.extractTargetIdentifier(target);
+            if (!targetId) return [];// target is not loaded in browser window
+            let source = AppAnnotationStore.lookupIdentifier(targetId);
             if (source.type === undefined) {
                 //console.error("source information for target " + targetId + " should have a type:", source);
             } else if (source.type === "annotation"){
                 AnnotationUtil.extractTargets(source.data).forEach(() => {
-                    domTargets = domTargets.concat(TargetUtil.mapTargetsToDOMElements(source.data, resourceData, annotations));
+                    domTargets = domTargets.concat(TargetUtil.mapTargetsToDOMElements(source.data));
                 });
             } else if (source.type === "resource") {
                 if (target.type === undefined) {
@@ -400,7 +383,7 @@ const TargetUtil = {
     },
 
     makeImageRegion : function(target, node) {
-        var imageRegion = {
+        let imageRegion = {
             type: "Image",
             node: node
         };
@@ -412,7 +395,7 @@ const TargetUtil = {
     },
 
     makeTextRange(target, node) {
-        var targetRange = {
+        let targetRange = {
             type: "Text",
             start: 0,
             end: -1,
@@ -427,7 +410,7 @@ const TargetUtil = {
     },
 
     makeTemporalSegment : function(target, node) {
-        var segment = {
+        let segment = {
             type: target.type,
             node: node
         };
@@ -445,7 +428,7 @@ const TargetUtil = {
             throw Error("Invalid text target! Should have selector or point to DOM element with text content");
         if (!target.selector)
             return resource.data.text;
-        var selector = target.selector;
+        let selector = target.selector;
         if (target.selector.refinedBy)
             selector = target.selector.refinedBy;
         // if there are multiple selectors, pick any selector since they are alternatives

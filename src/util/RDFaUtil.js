@@ -3,7 +3,7 @@
 
 import DOMUtil from "./DOMUtil.js";
 import StringUtil from "./StringUtil.js";
-
+import AnnotationActions from '../flux/AnnotationActions';
 
 // RDFa property names
 //let RDFaAttrs = ["about", "content", "datatype", "href", "property", "rel", "resource", "rev", "src", "typeof", "vocab"];
@@ -17,14 +17,10 @@ const RDFaUtil = {
     **************************
     */
 
-   rdfaIndex: null,
-
-    setBaseAnnotationOntology(url) {
-        RDFaUtil.baseAnnotationOntologyURL = url;
-    },
+    rdfaIndex: null,
 
     checkBaseAnnotationOntologySet() {
-        if (RDFaUtil.baseAnnotationOntologyURL) {
+        if (AnnotationActions.baseAnnotationOntologyURL) {
             return true;
         } else {
             throw Error("RDFAUtil - baseAnnotationOntologyURL not set");
@@ -69,7 +65,7 @@ const RDFaUtil = {
 
     isIgnoreClass(url) {
         RDFaUtil.checkBaseAnnotationOntologySet();
-        return url === RDFaUtil.baseAnnotationOntologyURL + "#IgnorableElement";
+        return url === AnnotationActions.baseAnnotationOntologyURL + "#IgnorableElement";
     },
 
     isIgnoreNode(node) {

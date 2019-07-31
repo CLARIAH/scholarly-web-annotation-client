@@ -6,7 +6,10 @@ import BodyCreator from './BodyCreator';
 import FlexModal from '../FlexModal';
 import AnnotationActions from '../../flux/AnnotationActions';
 import AppAnnotationStore from '../../flux/AnnotationStore';
+
 import IDUtil from '../../util/IDUtil';
+import TargetUtil from '../../util/TargetUtil';
+import AnnotationUtil from '../../util/AnnotationUtil';
 
 class AnnotationCreator extends React.Component {
 
@@ -32,7 +35,7 @@ class AnnotationCreator extends React.Component {
     setAnnotations = annotations => this.setState({annotations: annotations});
 
     createAnnotation = annotationTargets => {
-        let annotation = AnnotationActions.makeAnnotation(annotationTargets, this.props.currentUser.username);
+        let annotation = AnnotationUtil.generateW3CAnnotation(annotationTargets, this.props.currentUser.username);
         annotation.body = this.listBodies(this.state.createdBodies);
         this.editAnnotationBody(annotation);
     };
@@ -60,7 +63,7 @@ class AnnotationCreator extends React.Component {
     /* ------------------------------------- FOR OPENING/CLOSING THE ANNOTATION MODAL --------------------- */
 
     makeAnnotation = () => {
-        let candidates = AnnotationActions.getCandidates(this.state.annotations, this.props.config.defaults.target);
+        let candidates = TargetUtil.getCandidates(this.state.annotations, this.props.config.defaults.target, AppAnnotationStore.resourceData);
         this.setState({
             editAnnotation: null,
             candidates: candidates,
@@ -117,7 +120,7 @@ class AnnotationCreator extends React.Component {
         if (this.state.editAnnotation) {
             annotation = this.state.editAnnotation;
         } else {
-            annotation = AnnotationActions.makeAnnotation(this.state.selectedTargets, this.props.currentUser.username);
+            annotation = AnnotationUtil.generateW3CAnnotation(this.state.selectedTargets, this.props.currentUser.username);
         }
         let bodies = this.listBodies(this.state.createdBodies);
         if (bodies.length === 0) {

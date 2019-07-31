@@ -2,10 +2,15 @@
 
 import React from 'react';
 import AnnotationActions from '../../flux/AnnotationActions';
-import AnnotationStore from '../../flux/AnnotationStore';
 import AppCollectionStore from '../../flux/CollectionStore';
-import FlexModal from '../FlexModal';
+import AppAnnotationStore from '../../flux/AnnotationStore';
+
 import IDUtil from '../../util/IDUtil';
+import RDFaUtil from '../../util/RDFaUtil';
+import FRBRooUtil from '../../util/FRBRooUtil';
+import TimeUtil from '../../util/IDUtil';
+import TargetUtil from '../../util/TargetUtil';
+import AnnotationUtil from '../../util/AnnotationUtil';
 
 export default class Annotation extends React.Component {
 
@@ -18,7 +23,7 @@ export default class Annotation extends React.Component {
     }
 
     componentDidMount() {
-        this.setState({targetDOMElements: AnnotationActions.mapTargetsToDOMElements(this.props.annotation)});
+        this.setState({targetDOMElements: TargetUtil.mapTargetsToDOMElements(this.props.annotation)});
     }
 
     editAnnotationTarget = annotation => {
@@ -47,7 +52,7 @@ export default class Annotation extends React.Component {
     };
 
     toggleHighlight = () => {
-        AnnotationActions.toggleHighlight(this.state.targetDOMElements, this.state.highlighted);
+        TargetUtil.toggleHighlight(this.state.targetDOMElements, this.state.highlighted);
         this.setState({highlighted: this.state.highlighted ? false : true});
     };
 
@@ -65,6 +70,19 @@ export default class Annotation extends React.Component {
         let index = crumb.node.style.border.indexOf(" 1px solid red");
         crumb.node.style.border = crumb.node.style.border.substr(0, index);
     }
+
+
+    /* -------------------------- LOCAL BREADCRUMB TRAIL FUNCTION -------------------------- */
+
+    createBreadcrumbTrail = resourceId => {
+        if (AppAnnotationStore.resourceIndex.hasOwnProperty(resourceId)) {
+            return RDFaUtil.createBreadcrumbTrail(resourceId, AppAnnotationStore.resourceIndex);
+        } else if (AppAnnotationStore.externalResourceIndex.hasOwnProperty(resourceId)) {
+            return FRBRooUtil.createBreadcrumbTrail(resourceId, AppAnnotationStore.externalResourceIndex);
+        } else {
+            throw Error("Unknown resource!");
+        }
+    };
 
     /* -------------------------- RENDER FUNCTIONS -------------------------- */
 
@@ -86,26 +104,26 @@ export default class Annotation extends React.Component {
     renderResourceTarget = (target, source, targetCount) => {
         let text = "";
         if (target.type === "Text") {
-            text = AnnotationActions.getTargetText(target, source);
+            text = TargetUtil.getTargetText(target, source);
+            if (text.length > 40) {
+               text = text.substr(0, 37) + "...";
+            }
         } else if (target.type === "Image") {
-            let selector = AnnotationActions.getTargetMediaFragment(target);
+            let selector = TargetUtil.getTargetMediaFragment(target);
             let rect = selector.rect;
             let topLeft = selector.rect.x + ',' + selector.rect.y;
             let bottomRight = selector.rect.x + selector.rect.w + ',' + (selector.rect.y + selector.rect.h);
             text = <span>{'[' + topLeft + ' - ' + bottomRight + ']'}</span>;
         } else if (target.type === "Video") {
-            let selector = AnnotationActions.getTargetMediaFragment(target);
+            let selector = TargetUtil.getTargetMediaFragment(target);
             let segment = selector.interval;
             text = (
                 <span>
-                    {'[' + AnnotationActions.formatTime(segment.start) + ' - ' + AnnotationActions.formatTime(segment.end) + ']'}
+                    {'[' + TimeUtil.formatTime(segment.start) + ' - ' + TimeUtil.formatTime(segment.end) + ']'}
                 </span>
             );
         }
-        if (text.length > 40) {
-            text = text.substr(0, 37) + "...";
-        }
-        const breadcrumbs = AnnotationActions.createBreadcrumbTrail(source.data.rdfaResource);
+        const breadcrumbs = this.createBreadcrumbTrail(source.data.rdfaResource);
         const breadcrumbLabels = breadcrumbs.map((crumb, index) => {
             const next = index == 0 ? null : <span title={crumb.property}>&nbsp;&gt;&nbsp;</span>;
             return (
@@ -129,8 +147,8 @@ export default class Annotation extends React.Component {
     };
 
     renderExternalTarget = (target, source, targetCount) => {
-        const text = target.type === "Text" ? AnnotationActions.getTargetText(target, source) : '';
-        const breadcrumbs = AnnotationActions.createBreadcrumbTrail(target.source);
+        const text = target.type === "Text" ? TargetUtil.getTargetText(target, source) : '';
+        const breadcrumbs = this.createBreadcrumbTrail(target.source);
         const breadcrumbLabels = breadcrumbs.map((crumb, index) => {
             const next = index == 0 ? null : <span title={crumb.property}>&nbsp;&gt;&nbsp;</span>;
             const crumbType = crumb.type[0].substr(crumb.type[0].indexOf("#") + 1);
@@ -155,7 +173,7 @@ export default class Annotation extends React.Component {
     };
 
     renderAnnotationTarget = (target, source) => {
-        const body = AnnotationActions.extractBodies(source.data)[0];
+        const body = AnnotationUtil.extractBodies(source.data)[0];
         return (
             <div key={targetCount} className={IDUtil.cssClassName('annotation-target', this.CLASS_PREFIX)}>
                 <span className={IDUtil.cssClassName('badge annotation')}>{body.type}</span>
@@ -169,7 +187,7 @@ export default class Annotation extends React.Component {
         const actionButtons = this.renderButtons();
         const timestamp = (new Date(annotation.created)).toLocaleString();
 
-        const bodies = AnnotationActions.extractBodies(annotation).map((body, index) => {
+        const bodies = AnnotationUtil.extractBodies(annotation).map((body, index) => {
             return (
                 <div key={'__body__' + index}>
                     <div className={IDUtil.cssClassName('badge body-' + body.purpose)}>{body.purpose}</div>
@@ -179,13 +197,10 @@ export default class Annotation extends React.Component {
         });
 
         let targetCount = 0;
-        console.debug('annotation', annotation)
-        const targets = AnnotationActions.extractTargets(annotation).map(target => {
-            console.debug('target', target);
+        const targets = AnnotationUtil.extractTargets(annotation).map(target => {
             try {
                 targetCount++;
-                let source = AnnotationActions.lookupIdentifier(AnnotationActions.extractTargetIdentifier(target));
-                console.debug('source', source)
+                let source = AppAnnotationStore.lookupIdentifier(AnnotationUtil.extractTargetIdentifier(target));
                 var text = "";
                 var label;
                 if (source.type === "external") {

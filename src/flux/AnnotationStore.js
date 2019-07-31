@@ -1,10 +1,111 @@
 import MicroEvent from "microevent";
 import AppDispatcher from "./AppDispatcher";
 
-//See: https://github.com/jeromeetienne/microevent.js
-
-
 class AnnotationStore {
+
+    constructor() {
+        //all set via setResourceData()
+        this.resourceData = null;
+        this.resourceIndex = null;
+        this.relationIndex = null;
+        this.resourceStore = null;
+        this.representedResourceMap = null;
+        this.externalResourceIndex = null;
+
+        //set via setTopResources()
+        this.topResources = null;
+
+        //all set via setAnnotations()
+        this.annotations = null;
+        this.annotationIndex = null;
+    }
+
+    /* ----------------------------- SET DATA FUNCTIONS ----------------------------- */
+
+    //called by AnnotationActions._indexResources
+    setResourceData = resourceData => {
+        console.debug('setting resource data', resourceData);
+        this.resourceData = resourceData;
+        this.resourceIndex = resourceData ? resourceData.resourceIndex.resources : null;
+        this.relationIndex = resourceData ? resourceData.resourceIndex.relations : null;
+        this.resourceStore = resourceData ? resourceData.resourceStore : null;
+        this.representedResourceMap = resourceData ? resourceData.representedResourceMap : null;
+        this.externalResourceIndex = resourceData ? resourceData.externalResourceIndex : null;
+    }
+
+    //called by AnnotationActions.loadResources
+    setTopResources = topResources => {
+        console.debug('setting top resources', topResources);
+        this.topResources = topResources;
+    }
+
+    //called by AnnotationActions.loadAnnotations
+    setAnnotations = annotations => {
+        console.debug('setting annotations', annotations);
+        this.annotations = annotations;
+        this.annotationIndex = {};
+        annotations.forEach(a => {
+            this.annotationIndex[a.id] = a;
+        });
+    }
+
+    /* ----------------------------- GET DATA FUNCTIONS ----------------------------- */
+
+    lookupIdentifier = sourceId => {
+        var source = { type: null, data: null }; // for IDs to external resources
+        if (this.annotationIndex.hasOwnProperty(sourceId))
+            source = { type: "annotation", data: this.annotationIndex[sourceId] };
+        else if (this.resourceIndex.hasOwnProperty(sourceId))
+            source = { type: "resource", data: this.resourceIndex[sourceId] };
+        else if (this.externalResourceIndex.hasOwnProperty(sourceId))
+            source = { type: "external", data: this.externalResourceIndex[sourceId] };
+        return source;
+    }
+
+    lookupAnnotationsByTarget = resourceId => {
+        return Object.values(this.annotationIndex).filter(annotation => {
+            let match = annotation.target.some(target => {
+                if (target.source && target.source === resourceId) {
+                    return true;
+                } else if (target.identifier && target.identifier === resourceId) {
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+            return match ? true : false;
+        });
+    }
+
+    hasExternalResource = resourceId => {
+        if (!this.externalResourceIndex) {
+            return false;
+        } else {
+            return this.externalResourceIndex.hasOwnProperty(resourceId);
+        }
+    }
+
+    getExternalResources = resourceIds => {
+        if (!Array.isArray(resourceIds)) {
+            console.log("resourceIds:", resourceIds);
+            throw Error("resourceIds should be an array");
+        }
+        return resourceIds.filter(this.hasExternalResource).map((resourceId) => {
+            return this.getExternalResource(resourceId);
+        });
+    }
+
+    getExternalResource = resourceId => {
+        if (!this.externalResourceIndex) {
+            return null;
+        } else if (this.externalResourceIndex.hasOwnProperty(resourceId)) {
+            return this.externalResourceIndex[resourceId];
+        } else {
+            return null;
+        }
+    }
+
+    /* --------------------------- FUNCTIONS HANDLING THE DISPATCH EVENTS ------------------------- */
 
 
     setTargetObserverClass() {
@@ -86,7 +187,7 @@ class AnnotationStore {
 
 }
 
-var AppAnnotationStore = new AnnotationStore();
+const AppAnnotationStore = new AnnotationStore();
 
 //add support for emitting events
 MicroEvent.mixin(AnnotationStore);
@@ -151,9 +252,6 @@ AppDispatcher.register( function( action ) {
         break;
     case "set-server-address":
         AppAnnotationStore.setServerAddress(action.apiURL);
-        break;
-    case "register-resources":
-        AppAnnotationStore.registerResources(action.maps);
         break;
     case "server-status-change":
         AppAnnotationStore.changeServerStatus(action.serverAvailable);

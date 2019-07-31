@@ -14,7 +14,7 @@ const { JSDOM } = jsdom;
 import RDFaUtil from "../util/RDFaUtil.js";
 import FRBRooUtil from "../util/FRBRooUtil.js";
 import AnnotationActions from "../flux/AnnotationActions.js";
-import AnnotationStore from "../flux/AnnotationStore.js";
+import AppAnnotationStore from "../flux/AnnotationStore.js";
 const $rdf = require("rdflib");
 
 let localURL = "http://localhost:3001/";
@@ -211,14 +211,14 @@ describe("AnnotationActions", () => {
         it("should index letter representation", (done) => {
             //var promise = AnnotationActions._indexResources();
             AnnotationActions._indexResources().then((index) => {
-                expect(Object.keys(AnnotationStore.resourceIndex).length).to.equal(2);
-                expect(AnnotationStore.resourceIndex.hasOwnProperty(originalResource)).to.equal(true);
+                expect(Object.keys(AppAnnotationStore.resourceIndex).length).to.equal(2);
+                expect(AppAnnotationStore.resourceIndex.hasOwnProperty(originalResource)).to.equal(true);
                 done();
             });
             /*
             AnnotationActions._indexResources((error) => {
-                expect(Object.keys(AnnotationStore.resourceIndex).length).to.equal(2);
-                expect(AnnotationStore.resourceIndex.hasOwnProperty(originalResource)).to.equal(true);
+                expect(Object.keys(AppAnnotationStore.resourceIndex).length).to.equal(2);
+                expect(AppAnnotationStore.resourceIndex.hasOwnProperty(originalResource)).to.equal(true);
                 done();
             });
             */
@@ -244,7 +244,7 @@ describe("AnnotationActions", () => {
         it("should return false if resource is unknown", (done) => {
             loadRDFaPage();
             let resourceId = "urn:unknown";
-            let hasExternalResource = AnnotationActions.hasExternalResource(resourceId);
+            let hasExternalResource = AppAnnotationStore.hasExternalResource(resourceId);
             expect(hasExternalResource).to.equal(false);
             done();
         });
@@ -252,7 +252,7 @@ describe("AnnotationActions", () => {
         it("should return true if resource has represented abstract resource", (done) => {
             loadRDFaPage();
             AnnotationActions._indexResources().then(() => {
-                let hasExternalResource = AnnotationActions.hasExternalResource(originalResource);
+                let hasExternalResource = AppAnnotationStore.hasExternalResource(originalResource);
                 expect(hasExternalResource).to.equal(true);
                 done();
             });
@@ -279,7 +279,7 @@ describe("AnnotationActions", () => {
         it("should return null if resource is unknown", (done) => {
             loadRDFaPage();
             let resourceId = "urn:unknown";
-            let externalResources = AnnotationActions.getExternalResource(resourceId);
+            let externalResources = AppAnnotationStore.getExternalResource(resourceId);
             expect(externalResources).to.equal(null);
             done();
         });
@@ -287,7 +287,7 @@ describe("AnnotationActions", () => {
         it("should return external resource object if resource has represented abstract resource", (done) => {
             loadRDFaPage();
             AnnotationActions._indexResources().then(() => {
-                let externalResources = AnnotationActions.getExternalResource(originalResource);
+                let externalResources = AppAnnotationStore.getExternalResource(originalResource);
                 expect(typeof externalResources).to.equal("object");
                 done();
             });
@@ -296,7 +296,7 @@ describe("AnnotationActions", () => {
         it("should return object with relation property if resource has represented abstract resource", (done) => {
             loadRDFaPage();
             AnnotationActions._indexResources().then(() => {
-                let externalResources = AnnotationActions.getExternalResource(originalResource);
+                let externalResources = AppAnnotationStore.getExternalResource(originalResource);
                 expect(externalResources.hasOwnProperty("relation")).to.equal(true);
                 done();
             });

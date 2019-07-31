@@ -66,7 +66,7 @@ describe("TargetUtil", () => {
         const jsdomConfig = {url: "http://localhost:3001/testletter"}
         makeDOM(htmlSource, jsdomConfig);
         // make sure observerNodes are reset in case of mocha caching utils
-        AnnotationStore.resourceIndex = null;
+        AppAnnotationStore.setResourceData(null);
         DOMUtil.setObserverNodeClass("annotation-target-observer");
         let observerNodes = DOMUtil.getObserverNodes();
         RDFaUtil.setObserverNodes(observerNodes);

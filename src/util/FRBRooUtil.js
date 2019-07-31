@@ -7,6 +7,7 @@ import DataFactory from "rdflib/lib/data-factory";
 import rdf from "rdflib";
 import RDFaUtil from "./RDFaUtil.js";
 import VocabularyUtil from "./VocabularyUtil.js";
+import AnnotationActions from '../flux/AnnotationActions';
 
 const FRBRooUtil = {
 
@@ -15,7 +16,6 @@ const FRBRooUtil = {
     RDFS : Namespace("http://www.w3.org/2000/01/rdf-schema#"),
 
     importPredicate : "http://www.w3.org/2002/07/owl#imports",
-    baseAnnotationOntologyURL : null,
 
     newStore() {
         return DataFactory.graph();
@@ -223,8 +223,8 @@ const FRBRooUtil = {
     },
 
     mapFragmentObjectResources(resourceStore, resource, representedResourceIndex) {
-        let hasFragmentIn = FRBRooUtil.baseAnnotationOntologyURL + "#hasFragmentIn";
-        let hasFragmentOf = FRBRooUtil.baseAnnotationOntologyURL + "#hasFragmentOf";
+        let hasFragmentIn = AnnotationActions.baseAnnotationOntologyURL + "#hasFragmentIn";
+        let hasFragmentOf = AnnotationActions.baseAnnotationOntologyURL + "#hasFragmentOf";
         var objectRelations = FRBRooUtil.findExternalObjectRelations(resourceStore, resource, hasFragmentIn);
         var objectRelations = objectRelations.concat(FRBRooUtil.findExternalObjectRelations(resourceStore, resource, hasFragmentOf));
         if (objectRelations.length > 0) {
@@ -233,8 +233,8 @@ const FRBRooUtil = {
     },
 
     mapFragmentSubjectResources(resourceStore, resource, representedResourceIndex) {
-        let isFragmentIn = FRBRooUtil.baseAnnotationOntologyURL + "#isFragmentIn";
-        let isFragmentOf = FRBRooUtil.baseAnnotationOntologyURL + "#isFragmentOf";
+        let isFragmentIn = AnnotationActions.baseAnnotationOntologyURL + "#isFragmentIn";
+        let isFragmentOf = AnnotationActions.baseAnnotationOntologyURL + "#isFragmentOf";
         var subjectRelations = FRBRooUtil.findExternalSubjectRelations(resourceStore, resource, isFragmentIn);
         var subjectRelations = subjectRelations.concat(FRBRooUtil.findExternalSubjectRelations(resourceStore, resource, isFragmentOf));
         if (subjectRelations.length > 0) {
@@ -243,7 +243,7 @@ const FRBRooUtil = {
     },
 
     mapRepresentedObjectResources(resourceStore, resource, representedResourceIndex) {
-        let hasRepresentation = FRBRooUtil.baseAnnotationOntologyURL + "#hasRepresentation";
+        let hasRepresentation = AnnotationActions.baseAnnotationOntologyURL + "#hasRepresentation";
         let objectRelations = FRBRooUtil.findExternalObjectRelations(resourceStore, resource, hasRepresentation);
         if (objectRelations.length > 0) {
             FRBRooUtil.addIndexEntry(representedResourceIndex, resource, objectRelations[0]);
@@ -251,7 +251,7 @@ const FRBRooUtil = {
     },
 
     mapRepresentedSubjectResources(resourceStore, resource, representedResourceIndex) {
-        let isRepresentationOf = FRBRooUtil.baseAnnotationOntologyURL + "#isRepresentationOf";
+        let isRepresentationOf = AnnotationActions.baseAnnotationOntologyURL + "#isRepresentationOf";
         let subjectRelations = FRBRooUtil.findExternalSubjectRelations(resourceStore, resource, isRepresentationOf);
         if (subjectRelations.length > 0) {
             FRBRooUtil.addIndexEntry(representedResourceIndex, resource, subjectRelations[0]);
@@ -497,7 +497,7 @@ const FRBRooUtil = {
         if (!FRBRooUtil.isValidVocabularyStore(vocabularyStore)) {
             throw Error("Invalid vocabularyStore given");
         }
-        if (!FRBRooUtil.baseAnnotationOntologyURL) {
+        if (!AnnotationActions.baseAnnotationOntologyURL) {
             console.log("No baseAnnotationOntologyURL set!");
         }
         let imports = [];
@@ -505,7 +505,7 @@ const FRBRooUtil = {
             let vocabularyNode = rdf.sym(vocabularyURL);
             let importNode = rdf.sym(FRBRooUtil.importPredicate);
             let triples = vocabularyStore.triples.each(vocabularyNode, importNode, undefined);
-            if (vocabularyURL === FRBRooUtil.baseAnnotationOntologyURL) {
+            if (vocabularyURL === AnnotationActions.baseAnnotationOntologyURL) {
                 // don't import beyond the base annotation ontology
                 return;
             }
