@@ -210,7 +210,7 @@ describe("FRBRooUtil", () => {
         mockServer.get("/vangoghannotationontology.ttl").thenReply(200, vangoghOntologyString);
         mockServer.get("/editionannotationontology.ttl").thenReply(200, editionOntologyString);
         loadRDFaPage();
-        RDFaUtil.setBaseAnnotationOntology(baseAnnotationOntologyURL);
+        RDFaUtil.baseAnnotationOntologyURL = baseAnnotationOntologyURL;
         FRBRooUtil.loadVocabularies()
             .then(FRBRooUtil.loadExternalResources).then((externalStore) => {
                 resourceStore = externalStore;
@@ -421,7 +421,7 @@ describe("FRBRooUtil", () => {
         let externalResources = null;
 
         before((done) => {
-            RDFaUtil.setBaseAnnotationOntology(baseAnnotationOntologyURL);
+            RDFaUtil.baseAnnotationOntologyURL = baseAnnotationOntologyURL;
             RDFaUtil.indexRDFa().then((index) => {
                 rdfaResources = Object.keys(index.resources);
                 representations = FRBRooUtil.mapRepresentedResources(resourceStore, rdfaResources);

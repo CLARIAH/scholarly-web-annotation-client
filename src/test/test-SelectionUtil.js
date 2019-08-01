@@ -135,7 +135,7 @@ describe("SelectionUtil", () => {
 
         beforeEach((done) => {
             loadRDFaPage();
-            RDFaUtil.setBaseAnnotationOntology(baseAnnotationOntologyURL);
+            RDFaUtil.baseAnnotationOntologyURL = baseAnnotationOntologyURL;
             RDFaUtil.resetIgnoreNodes();
             SelectionUtil.currentSelection = null;
             done();
@@ -204,7 +204,7 @@ describe("SelectionUtil", () => {
 
         beforeEach((done) => {
             loadRDFaPage();
-            RDFaUtil.setBaseAnnotationOntology(baseAnnotationOntologyURL);
+            RDFaUtil.baseAnnotationOntologyURL = baseAnnotationOntologyURL;
             RDFaUtil.resetIgnoreNodes();
             SelectionUtil.currentSelection = null;
             done();
@@ -231,7 +231,7 @@ describe("SelectionUtil", () => {
 
         beforeEach((done) => {
             loadRDFaPage();
-            RDFaUtil.setBaseAnnotationOntology(baseAnnotationOntologyURL);
+            RDFaUtil.baseAnnotationOntologyURL = baseAnnotationOntologyURL;
             RDFaUtil.resetIgnoreNodes();
             SelectionUtil.currentSelection = null;
             done();

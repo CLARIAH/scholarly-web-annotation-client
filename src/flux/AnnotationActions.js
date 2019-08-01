@@ -36,7 +36,6 @@ const AnnotationActions = {
     accessStatus : permission.accessStatus, // for retrieving annotations from the server
     permission : permission.permission, // for submitting or updating annotations in the server
     annotationListener: [], // stores any (external) listeners interested in whenever the annotations are loaded
-    baseAnnotationOntologyURL: null, // referenced by both FRBRooUtil and RDFaUtil
 
     getServerAddress() {
         return AnnotationAPI.getServerAddress();
@@ -48,7 +47,8 @@ const AnnotationActions = {
     },
 
     setBaseAnnotationOntology(url) {
-        AnnotationActions.baseAnnotationOntologyURL = url;
+        RDFaUtil.baseAnnotationOntologyURL = url;
+        FRBRooUtil.baseAnnotationOntologyURL = url;
     },
 
     addListenerElement(element) {
@@ -118,13 +118,6 @@ const AnnotationActions = {
         });
     },
 
-    activate : function(annotation) {
-        AppDispatcher.dispatch({
-            eventName: "activate-annotation",
-            annotation: annotation
-        });
-    },
-
     edit : function(annotation) { //is the annotation always on the same page?
         AppDispatcher.dispatch({
             eventName: "edit-annotation",
@@ -136,20 +129,6 @@ const AnnotationActions = {
         AppDispatcher.dispatch({
             eventName: "create-annotation",
             annotationTargets: annotationTargets
-        });
-    },
-
-    set : function(annotation) { //is the annotation always on the same page?
-        AppDispatcher.dispatch({
-            eventName: "set-annotation",
-            annotation: annotation
-        });
-    },
-
-    play : (annotation) => { //is the annotation always on the same page? (no)
-        AppDispatcher.dispatch({
-            eventName: "play-annotation",
-            annotation: annotation
         });
     },
 

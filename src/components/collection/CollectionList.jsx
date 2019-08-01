@@ -8,6 +8,7 @@ import AppAnnotationStore from './../../flux/AnnotationStore';
 import CollectionActions from '../../flux/CollectionActions.js';
 
 export default class CollectionViewer extends React.Component {
+
     constructor(props) {
         super(props);
         this.state = {
@@ -37,6 +38,7 @@ export default class CollectionViewer extends React.Component {
     }
 
     getCollections() {
+        console.debug('GETTING COLLECTIONS!');
         CollectionActions.getCollections();
     }
 

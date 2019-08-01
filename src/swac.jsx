@@ -13,7 +13,6 @@ import ReactDOM from 'react-dom';
 import AnnotationClient from './components/AnnotationClient.jsx';
 import defaultConfig from './rdfa-annotation-config.js';
 import AnnotationActions from './flux/AnnotationActions.js';
-import CollectionActions from './flux/CollectionActions.js';
 import AppAnnotationStore from './flux/AnnotationStore.js';
 import AnnotationAPI from './api/AnnotationAPI.js';
 
@@ -51,6 +50,7 @@ export class ScholarlyWebAnnotator {
         if (configuration)
             this.overrideDefaultConfiguration(configuration);
 
+        console.debug('server', this.clientConfig.services.AnnotationServer)
         AnnotationActions.setServerAddress(this.clientConfig.services.AnnotationServer.api);
         AnnotationActions.setBaseAnnotationOntology(this.clientConfig.baseAnnotationOntologyURL);
         this.configureObservers();

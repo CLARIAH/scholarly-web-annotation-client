@@ -104,13 +104,9 @@ class AnnotationCreator extends React.Component {
 
     /* ------------------------------------- NOT USED ANYMORE ---------------------------- */
 
-    hasTarget = () => {
-        return this.state.selectedTargets.length > 0 || this.state.editAnnotation !== null;
-    };
+    hasTarget = () => this.state.selectedTargets.length > 0 || this.state.editAnnotation !== null;
 
-    hasBody = () => {
-        return this.listBodies(this.state.createdBodies).length > 0;
-    };
+    hasBody = () => this.listBodies(this.state.createdBodies).length > 0;
 
     /* ------------------------------------- FOR SAVING --------------------------------------- */
 

@@ -16,8 +16,6 @@
 
 "use strict";
 
-import AppAnnotationStore from '../flux/AnnotationStore';
-
 import DOMUtil from "./DOMUtil.js";
 import RDFaUtil from "./RDFaUtil.js";
 import FRBRooUtil from "./FRBRooUtil.js";
@@ -351,17 +349,17 @@ const TargetUtil = {
         return TargetUtil.mimeTypeMap[mimeType];
     },
 
-    mapTargetsToDOMElements : (annotation) => {
+    mapTargetsToDOMElements : (annotation, annotationStore) => {
         let domTargets = [];
         AnnotationUtil.extractTargets(annotation).forEach((target) => {
             const targetId = AnnotationUtil.extractTargetIdentifier(target);
             if (!targetId) return [];// target is not loaded in browser window
-            let source = AppAnnotationStore.lookupIdentifier(targetId);
+            let source = annotationStore.lookupIdentifier(targetId);
             if (source.type === undefined) {
                 //console.error("source information for target " + targetId + " should have a type:", source);
             } else if (source.type === "annotation"){
                 AnnotationUtil.extractTargets(source.data).forEach(() => {
-                    domTargets = domTargets.concat(TargetUtil.mapTargetsToDOMElements(source.data));
+                    domTargets = domTargets.concat(TargetUtil.mapTargetsToDOMElements(source.data, annotationStore));
                 });
             } else if (source.type === "resource") {
                 if (target.type === undefined) {
@@ -541,6 +539,3 @@ const TargetUtil = {
 };
 
 export default TargetUtil;
-
-
-

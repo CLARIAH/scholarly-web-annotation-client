@@ -18,9 +18,10 @@ const RDFaUtil = {
     */
 
     rdfaIndex: null,
+    baseAnnotationOntologyURL : null, //requires to be set on init (now set from AnnotationActions)
 
     checkBaseAnnotationOntologySet() {
-        if (AnnotationActions.baseAnnotationOntologyURL) {
+        if (RDFaUtil.baseAnnotationOntologyURL) {
             return true;
         } else {
             throw Error("RDFAUtil - baseAnnotationOntologyURL not set");
@@ -65,7 +66,7 @@ const RDFaUtil = {
 
     isIgnoreClass(url) {
         RDFaUtil.checkBaseAnnotationOntologySet();
-        return url === AnnotationActions.baseAnnotationOntologyURL + "#IgnorableElement";
+        return url === RDFaUtil.baseAnnotationOntologyURL + "#IgnorableElement";
     },
 
     isIgnoreNode(node) {

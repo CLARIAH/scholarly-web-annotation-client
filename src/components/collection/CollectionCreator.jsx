@@ -1,229 +1,75 @@
-
 'use strict'
 
 import React from 'react';
-import FlexModal from '../FlexModal';
-import Annotation from '../annotation/Annotation.jsx';
-import AppCollectionStore from '../../flux/CollectionStore';
-import AppAnnotationStore from '../../flux/AnnotationStore';
-import CollectionActions from '../../flux/CollectionActions';
-import CollectionLabelEditor from './CollectionLabelEditor';
-import CollectionContentEditor from './CollectionContentEditor';
-import $ from 'jquery';
+
+import IDUtil from '../../util/IDUtil';
+
+import Annotation from '../annotation/Annotation';
+import PropTypes from 'prop-types';
 
 export default class CollectionCreator extends React.Component {
+
     constructor(props) {
         super(props);
-        this.handleLabelChange = this.handleLabelChange.bind(this);
-        this.state = {
-            annotations: [],
-            collectionLabel: "",
-            page: [],
-            showModal: false,
-            toAdd: [],
-            toRemove: [],
-            view: "label",
-        }
-        this.collectionLabel = "";
+        this.CLASS_PREFIX = 'cc';
+        this.labelRef = React.createRef();
     }
 
     componentDidMount() {
-        AppCollectionStore.bind('edit-collection', this.editCollection.bind(this));
-        AppCollectionStore.bind('updated-collection', this.fetchPage.bind(this));
-        AppCollectionStore.bind('loaded-collection', this.setCollection.bind(this));
-        AppAnnotationStore.bind('loaded-annotations', this.setAnnotations.bind(this));
-        AppCollectionStore.bind('loaded-page', this.setPage.bind(this));
+        console.debug(this.labelRef)
+        this.labelRef.current.value = this.props.collection.label;
     }
 
-    setCollection(collection) {
-        this.setState({collection: collection});
-    }
+    save = () => this.props.onSave({...this.props.collection, label : this.labelRef.current.value});
+    addToCollection = annotation => this.props.onAddToCollection(this.props.collection.id, annotation);
+    removeFromCollection = annotation => this.props.onRemoveFromCollection(this.props.collection.id, annotation);
 
-    setAnnotations(annotations) {
-        this.setState({annotations: annotations});
-    }
-
-    setPage(page) {
-        this.setState({page: page});
-    }
-
-    fetchPage(collection) {
-        console.log("fetching collection page");
-        console.log(collection);
-        CollectionActions.getCollectionPage(collection.last);
-    }
-
-    handleChange(event) {
-        this.setState({collectionLabel: event.target.value});
-    }
-
-    makeCollection() {
-        var collection = {
-            creator: this.props.currentUser.username
-        };
-        this.editCollection(collection);
-    }
-
-    editCollection(collection, view) {
-        if (!view) {
-            view = "label";
-        }
-        //console.log("editCollection - collection:", collection);
-        var page = [];
-        if (collection.label !== undefined)
-            this.collectionLabel = collection.label;
-            //this.setState({collectionLabel: collection.label});
-        if (collection.last !== undefined && collection.last !== null) {
-            //page = collection.last;
-            console.log("getting collection page");
-            CollectionActions.getCollectionPage(collection.last);
-        }
-        this.setState({collection: collection, page: page, view: view, showModal: true});
-    }
-    hideCollectionForm() {
-        this.setState({showModal: false});
-    }
-
-    saveCollection() {
-        $('#collection__modal').modal('hide');//TODO ugly, but without this the static backdrop won't disappear!
-        var collection = this.state.collection;
-        collection.label = this.collectionLabel;
-        //console.log("saveCollection - collection:", collection);
-        CollectionActions.save(collection);
-        this.collectionLabel = "";
-        this.setState({
-            showModal: false,
-            collectionLabel: "",
-            collection: null,
-            page: [],
-            annotations: [],
-        });
-    }
-
-    addToCollection(annotation) {
-        CollectionActions.addAnnotation(this.state.collection.id, annotation);
-    }
-
-    removeFromCollection(annotation) {
-        CollectionActions.removeAnnotation(this.state.collection.id, annotation.id);
-    }
-
-    handleLabelChange(label) {
-        this.collectionLabel = label;
-    }
+    renderMembershipEditor = (collection, addCandidates, removeCandidates) => {
+        return (
+            <div className={IDUtil.cssClassName('editor', this.CLASS_PREFIX)}>
+                <input ref={this.labelRef} type="text"/>
+                <div className={IDUtil.cssClassName('memberships', this.CLASS_PREFIX)}>
+                    <div>
+                        <label className={IDUtil.cssClassName('block-title')}>Select which to remove</label>
+                        {removeCandidates}
+                    </div>
+                    <div>
+                        <label className={IDUtil.cssClassName('block-title')}>Select which to add</label>
+                        {addCandidates}
+                    </div>
+                </div>
+            </div>
+        )
+    };
 
     render() {
-        let component = this;
-        var addCandidates = [];
-        var removeCandidates = [];
+        const pageIds = this.props.page.map(annotation => annotation.id);
 
-        //let pageItems = (this.state.page && this.state.page.items !== undefined) ? this.state.page.items : [];
-        let pageItems = this.state.page;
-        //console.log(pageItems);
-        let pageIds = pageItems.map((annotation) => {return annotation.id});
-        //let pageIds = this.state.page;
-
-        addCandidates = this.state.annotations.filter((annotation) => {return pageIds.includes(annotation.id) === false;}).map((annotation) => {
-
+        //annotations that are not on the page can be selected for addition
+        const addCandidates = this.props.annotations.filter(annotation => pageIds.includes(annotation.id) === false).map(annotation => {
             return (
-                <div
-                    onClick={() => {component.addToCollection(annotation)}}
-                    key={annotation.id}
-                >
-                    <Annotation
-                        annotation={annotation}
-                        currentUser={null}
-                    />
-                </div>
-            );
-        });
-        removeCandidates = pageItems.map((annotation) => {
-            return (
-                <div
-                    onClick={() => {component.removeFromCollection(annotation)}}
-                    key={annotation.id}
-                >
-                    <Annotation
-                        annotation={annotation}
-                        currentUser={null}
-                    />
+                <div onClick={this.addToCollection.bind(this, annotation)} key={annotation.id}>
+                    <Annotation annotation={annotation}/>
                 </div>
             );
         });
 
-        var editor = null;
-        let editViews = ["label", "content"];
-
-        const editorTabs = editViews.map((editView) => {
+        //annotations on the page can be selected to be removed
+        const removeCandidates = this.props.page.map(annotation => {
             return (
-                <li
-                    key={editView + '__tab_option'}
-                    className='nav-item'
-                >
-                    <a
-                        key={editView + "-editor-tab"}
-                        className={this.state.view === editView ? 'nav-link active' : 'nav-link'}
-                        data-toggle="tab"
-                        href={'#' + editView}
-                    >
-                        {editView}
-                    </a>
-                </li>
-            )
-        });
-
-        let editorTabContents = editViews.map((editView) => {
-            //console.log("render - state.view:", this.state.view);
-            //console.log("render - editView:", editView);
-            if (editView === "label") {
-                editor = (<CollectionLabelEditor
-                              onChange={this.handleLabelChange}
-                              collectionLabel={this.collectionLabel}
-                          />);
-            } else if (editView === "content") {
-                editor = (<CollectionContentEditor
-                    collection={this.state.collection}
-                    addCandidates={addCandidates}
-                    removeCandidates={removeCandidates}
-                />);
-            }
-            return (
-                <div
-                    key={editView + '__tab_content'}
-                    id={editView}
-                    className={this.state.view === editView ? 'tab-pane active' : 'tab-pane'}>
-                    {editor}
+                <div onClick={this.removeFromCollection.bind(this, annotation)} key={annotation.id}>
+                    <Annotation annotation={annotation}/>
                 </div>
-            )
+            );
         });
+
+        //render the tabbed view containing 1) a CollectionLabelEditor and 2) CollectionContentEditor
+        const editor = this.renderMembershipEditor(this.props.collection, addCandidates, removeCandidates);
 
         return (
-            <div className="CollectionCreator"
-                key="collection-creator"
-            >
-                {this.props.currentUser ?
-                    <button className="btn btn-light" onClick={this.makeCollection.bind(this)}>Make collection</button>
-                    : null
-                }
-                {this.state.showModal ?
-                    <FlexModal
-                        key="collection-flex-modal"
-                        elementId="collection__modal"
-                        handleHideModal={this.hideCollectionForm.bind(this)}
-                        confirmLabel="Save"
-                        confirmAction={this.saveCollection.bind(this)}
-                        title={'Provide a label for your collection'}
-                    >
-                        <div>
-                            <ul className="nav nav-tabs">
-                                {editorTabs}
-                            </ul>
-                            <div className="tab-content">
-                                {editorTabContents}
-                            </div>
-                        </div>
-                    </FlexModal>: null
-                }
+            <div className={IDUtil.cssClassName('collection-creator')}>
+                {editor}
+                <button id="save_btn" className={IDUtil.cssClassName('btn')} onClick={this.save}>Save</button>
             </div>
         )
     }

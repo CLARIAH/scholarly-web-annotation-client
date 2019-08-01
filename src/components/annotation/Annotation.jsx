@@ -23,7 +23,7 @@ export default class Annotation extends React.Component {
     }
 
     componentDidMount() {
-        this.setState({targetDOMElements: TargetUtil.mapTargetsToDOMElements(this.props.annotation)});
+        this.setState({targetDOMElements: TargetUtil.mapTargetsToDOMElements(this.props.annotation, AppAnnotationStore)});
     }
 
     editAnnotationTarget = annotation => {
@@ -51,7 +51,8 @@ export default class Annotation extends React.Component {
         }
     };
 
-    toggleHighlight = () => {
+    toggleHighlight = e => {
+        console.debug('THIS SHOULD NOT HAPPEN', e);
         TargetUtil.toggleHighlight(this.state.targetDOMElements, this.state.highlighted);
         this.setState({highlighted: this.state.highlighted ? false : true});
     };
@@ -93,11 +94,8 @@ export default class Annotation extends React.Component {
         const editTarget = this.canEdit() ? renderButton('edit target', this.editAnnotationTarget) : null;
         const del = this.canDelete() ? renderButton('delete', this.deleteAnnotation) : null;
         const copy = this.canCopy() ? renderButton('copy', this.copyAnnotation) : null;
-        return (
-            <div>
-                {editBody} | {editTarget} | {del} | {copy}
-            </div>
-        );
+
+        return this.props.currentUser ? <div>{editBody} | {editTarget} | {del} | {copy}</div> : null;
 
     };
 
@@ -201,8 +199,6 @@ export default class Annotation extends React.Component {
             try {
                 targetCount++;
                 let source = AppAnnotationStore.lookupIdentifier(AnnotationUtil.extractTargetIdentifier(target));
-                var text = "";
-                var label;
                 if (source.type === "external") {
                     return this.renderExternalTarget(target, source, targetCount);
                 }

@@ -24,7 +24,6 @@ class AnnotationStore {
 
     //called by AnnotationActions._indexResources
     setResourceData = resourceData => {
-        console.debug('setting resource data', resourceData);
         this.resourceData = resourceData;
         this.resourceIndex = resourceData ? resourceData.resourceIndex.resources : null;
         this.relationIndex = resourceData ? resourceData.resourceIndex.relations : null;
@@ -35,13 +34,11 @@ class AnnotationStore {
 
     //called by AnnotationActions.loadResources
     setTopResources = topResources => {
-        console.debug('setting top resources', topResources);
         this.topResources = topResources;
     }
 
     //called by AnnotationActions.loadAnnotations
     setAnnotations = annotations => {
-        console.debug('setting annotations', annotations);
         this.annotations = annotations;
         this.annotationIndex = {};
         annotations.forEach(a => {
@@ -52,7 +49,7 @@ class AnnotationStore {
     /* ----------------------------- GET DATA FUNCTIONS ----------------------------- */
 
     lookupIdentifier = sourceId => {
-        var source = { type: null, data: null }; // for IDs to external resources
+        let source = { type: null, data: null }; // for IDs to external resources
         if (this.annotationIndex.hasOwnProperty(sourceId))
             source = { type: "annotation", data: this.annotationIndex[sourceId] };
         else if (this.resourceIndex.hasOwnProperty(sourceId))
@@ -141,24 +138,12 @@ class AnnotationStore {
         this.trigger("deleted-annotation", annotation);
     }
 
-    activate(annotation) {
-        this.trigger("activate-annotation", annotation);
-    }
-
     edit(annotation) {
         this.trigger("edit-annotation", annotation);
     }
 
     createAnnotation(annotationTargets) {
         this.trigger("create-annotation", annotationTargets);
-    }
-
-    set(annotation) {
-        this.trigger("set-annotation", annotation);
-    }
-
-    play(annotation) {
-        this.trigger("play-annotation", annotation);
     }
 
     reloadAnnotations() {
@@ -202,20 +187,11 @@ AppDispatcher.register( function( action ) {
     case "delete-annotation":
         AppAnnotationStore.delete(action.annotation);
         break;
-    case "activate-annotation":
-        AppAnnotationStore.activate(action.annotation, action.callback);
-        break;
     case "edit-annotation":
         AppAnnotationStore.edit(action.annotation, action.callback);
         break;
     case "create-annotation":
         AppAnnotationStore.createAnnotation(action.annotationTargets, action.callback);
-        break;
-    case "set-annotation":
-        AppAnnotationStore.set(action.annotation, action.callback);
-        break;
-    case "play-annotation":
-        AppAnnotationStore.play(action.annotation, action.callback);
         break;
     case "change-target":
         AppAnnotationStore.changeTarget(action.annotationTarget);

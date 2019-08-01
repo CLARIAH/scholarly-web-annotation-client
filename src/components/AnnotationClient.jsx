@@ -32,19 +32,15 @@ export default class AnnotationClient extends React.Component {
     }
 
     componentDidMount() {
-        AppAnnotationStore.bind('login-succeeded', this.setUser.bind(this));
-        AppAnnotationStore.bind('register-succeeded', this.setUser.bind(this));
-        AppAnnotationStore.bind('logout-user', this.setUser.bind(this));
-        AppAnnotationStore.bind('server-status-change', this.setServerAvailable.bind(this));
+        AppAnnotationStore.bind('server-status-change', this.setServerAvailable);
+        AppAnnotationStore.bind('login-succeeded', this.setUser);
+        AppAnnotationStore.bind('register-succeeded', this.setUser);
+        AppAnnotationStore.bind('logout-user', this.setUser);
     }
 
-    setServerAvailable(serverAvailable) {
-        this.setState({serverAvailable: serverAvailable});
-    }
+    setServerAvailable = serverAvailable => this.setState({serverAvailable: serverAvailable});
 
-    setUser(user) {
-        this.setState({user: user});
-    }
+    setUser = user => this.setState({user: user});
 
     handleAccessPreferenceChange = event => {
         let level = event.target.value;
