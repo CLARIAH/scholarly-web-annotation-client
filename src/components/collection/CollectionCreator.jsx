@@ -1,11 +1,10 @@
 'use strict'
 
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import IDUtil from '../../util/IDUtil';
-
 import Annotation from '../annotation/Annotation';
-import PropTypes from 'prop-types';
 
 export default class CollectionCreator extends React.Component {
 
@@ -20,6 +19,7 @@ export default class CollectionCreator extends React.Component {
         this.labelRef.current.value = this.props.collection.label;
     }
 
+    //CRUD callback functions
     save = () => this.props.onSave({...this.props.collection, label : this.labelRef.current.value});
     addToCollection = annotation => this.props.onAddToCollection(this.props.collection.id, annotation);
     removeFromCollection = annotation => this.props.onRemoveFromCollection(this.props.collection.id, annotation);
@@ -73,5 +73,13 @@ export default class CollectionCreator extends React.Component {
             </div>
         )
     }
-
 }
+
+CollectionCreator.propTypes = {
+    collection: PropTypes.object.isRequired,
+    annotations: PropTypes.array.isRequired,
+    page: PropTypes.array.isRequired,
+    onSave: PropTypes.func.isRequired,
+    onAddToCollection: PropTypes.func.isRequired,
+    onRemoveFromCollection: PropTypes.func.isRequired
+};

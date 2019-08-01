@@ -2,67 +2,24 @@
 'use strict'
 
 import React from 'react';
-import Collection from './Collection.jsx';
-import AppCollectionStore from './../../flux/CollectionStore';
-import AppAnnotationStore from './../../flux/AnnotationStore';
-import CollectionActions from '../../flux/CollectionActions.js';
+import PropTypes from 'prop-types';
+import Collection from './Collection';
+import IDUtil from '../../util/IDUtil';
 
-export default class CollectionViewer extends React.Component {
+export default class CollectionList extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {
-            collections: [],
-            default: null
-        }
-    }
-
-    componentDidMount() {
-        AppCollectionStore.bind('loaded-collections', this.listCollections.bind(this));
-        AppCollectionStore.bind('saved-collection', this.getCollections.bind(this));
-        AppCollectionStore.bind('updated-collection', this.getCollections.bind(this));
-        AppAnnotationStore.bind('saved-annotation', this.addAnnotation.bind(this));
-        AppAnnotationStore.bind('deleted-annotation', this.getCollections.bind(this));
-        AppCollectionStore.bind('deleted-collection', this.getCollections.bind(this));
-        AppCollectionStore.bind('default-collection', this.setDefaultCollection.bind(this));
-        CollectionActions.getCollections();
-    }
-
-    setDefaultCollection(collectionId) {
-        this.setState({default: collectionId});
-    }
-
-    addAnnotation(annotation) {
-        if (this.state.default)
-            CollectionActions.addAnnotation(this.state.default, annotation);
-    }
-
-    getCollections() {
-        console.debug('GETTING COLLECTIONS!');
-        CollectionActions.getCollections();
-    }
-
-    listCollections(collections) {
-        this.setState({collections: collections});
     }
 
     render() {
-        let component = this;
-        let collections = component.state.collections.map((collection, index) => {
-            let key = "collection-" + index;
-            return (
-                <Collection
-                    collection={collection}
-                    currentUser={component.props.currentUser}
-                    key={key}
-                    defaultCollection={this.state.default}
-                />
-            )
-        })
+        const collections = this.props.collections.map(
+            (collection, index) => <Collection key={"__c__" + index} collection={collection} currentUser={this.props.currentUser}/>
+        );
         return (
-            <div className="CollectionList">
-                <h3>Saved collections</h3>
-                <ul>
+            <div className={IDUtil.cssClassName('collection-list')}>
+                <label className={IDUtil.cssClassName('block-title')}>Saved collections</label>
+                <ul className={IDUtil.cssClassName('item-list')}>
                     {collections}
                 </ul>
             </div>
@@ -71,3 +28,7 @@ export default class CollectionViewer extends React.Component {
 
 }
 
+CollectionList.propTypes = {
+    collections: PropTypes.array.isRequired,
+    currentUser: PropTypes.object.isRequired
+}
