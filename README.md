@@ -42,6 +42,8 @@ The configuration consists of four parts:
 
 4. `defaults`: here you can specify defaults for certain aspects of the annotation process, including the default target types. This is an efficient way to provide users with a default list of annotation targets based on the vocabulary with which the annotatable objects in the DOM are described. For instance, in the example of the Van Gogh correspondence, if the edition maintainer expects most users will want to annotate the paragraphs of letters, they can set `Paragraphinletter` as the default target type. When a user then hit the `Make annotation` button, the client lists the individual paragraphs as default targets.
 
+5. `baseAnnotationOntologyURL`: a URL specifying the base ontology for deriving hierarchical relationships between annotatable resources. 
+
 Put the configuration in a JSON object (into a ``<script>``) after the ones you added in the previous step:
 
 ```json
@@ -103,7 +105,8 @@ Put the configuration in a JSON object (into a ``<script>``) after the ones you 
     },
     "defaults": {
         "target": ["ParagraphInLetter", "Note", "LocationNote", "SourceNote"]
-    }
+    },
+    "baseAnnotationOntologyURL": "http://boot.huygens.knaw.nl/vgdemo/editionannotationontology.ttl"
 }
 ```
 
@@ -186,7 +189,8 @@ The SWA client modules can be found in the [releases](https://github.com/CLARIAH
     },
     "defaults": {
         "target": ["ParagraphInLetter", "Note", "LocationNote", "SourceNote"]
-    }
+    },
+    "baseAnnotationOntologyURL": "http://boot.huygens.knaw.nl/vgdemo/editionannotationontology.ttl"
 }
 ```
 
