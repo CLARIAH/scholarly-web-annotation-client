@@ -27,3 +27,4 @@ public/js/openseadragonselection/
 
 #never commit real settings
 settings.py
+beng-annotation-config.json
